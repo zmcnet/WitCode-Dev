@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.local
+data/
+
+# 参考源码（第三方，体积大且有各自许可证，不入库）
+resources/
+
+# 构建/测试产物
+.vite/
+coverage/
+test-results/
+playwright-report/
+*.db
+*.db-journal
