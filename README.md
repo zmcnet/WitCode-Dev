@@ -201,9 +201,3 @@ WitCode 是全新实现，不 fork、不复制代码，只参考设计：
 ## 许可
 
 [Apache-2.0](LICENSE)。
-
----
-
-## 许可证
-
-Apache-2.0（LICENSE 文件待补）。
