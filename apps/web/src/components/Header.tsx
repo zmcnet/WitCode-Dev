@@ -1,27 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
+import { IconChevronDown, IconFolder, IconPanelRight } from './icons';
 
 interface Props {
   workspaceName: string;
   sessionTitle: string;
-  brainName: string;
   approvalPending: boolean;
   rightOpen: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
   onToggleRight: () => void;
-  onOpenSettings: () => void;
 }
 
 export function Header({
   workspaceName,
   sessionTitle,
-  brainName,
   approvalPending,
   rightOpen,
   sidebarCollapsed,
   onToggleSidebar,
   onToggleRight,
-  onOpenSettings,
 }: Props) {
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -62,9 +59,9 @@ export function Header({
             title={`当前工作区：${workspaceName}`}
             onClick={() => setWorkspaceOpen((value) => !value)}
           >
-            <span className="folder-glyph" aria-hidden="true">▱</span>
+            <IconFolder size={14} />
             <span className="workspace-name">{workspaceName}</span>
-            <span className="chev" aria-hidden="true">▾</span>
+            <IconChevronDown size={12} />
           </button>
           {workspaceOpen ? (
             <div className="workspace-popover">
@@ -76,9 +73,6 @@ export function Header({
         </div>
         <span className="topbar-sep" aria-hidden="true">/</span>
         <span className="topbar-session-title" title={sessionTitle}>{sessionTitle}</span>
-        <span className="topbar-brain" title={`当前脑子：${brainName}`}>
-          <span aria-hidden="true">◈</span> {brainName}
-        </span>
       </div>
 
       <div className="topbar-right">
@@ -95,21 +89,12 @@ export function Header({
         <button
           type="button"
           className={`icon-btn ${rightOpen ? 'active' : ''}`}
-          aria-label="右栏（占位）"
+          aria-label="右栏"
           aria-pressed={rightOpen}
-          title="右栏（占位）"
+          title="右栏"
           onClick={onToggleRight}
         >
-          ▥
-        </button>
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label="设置"
-          title="设置"
-          onClick={onOpenSettings}
-        >
-          ⚙
+          <IconPanelRight size={16} />
         </button>
       </div>
     </header>

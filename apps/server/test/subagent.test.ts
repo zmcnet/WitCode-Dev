@@ -229,7 +229,7 @@ test('spawn_subagent 工具：元数据正确、task 非空校验、结果回填
 
   assert.equal(tool.name, 'spawn_subagent');
   assert.equal(tool.destructive, false);
-  assert.equal(tool.riskLevel, 'medium');
+  assert.equal(tool.riskLevel, 'low');
   assert.equal(tool.concurrentSafe, false);
 
   const ctx = { workspace: dir };

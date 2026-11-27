@@ -1,0 +1,153 @@
+converted 152 declarations
+    144 13     .workspace-btn
+    167 13     .topbar-session-title
+    182 11     .topbar-brain
+    190 12     .topbar-brain span
+    218 11     .popover-title
+    224 12     .popover-path
+    233 11     .popover-hint
+    320 14     .brand-name
+    347 13     .new-session
+    380 12     .nav-item
+    416 11     .side-section-label
+    423 11     .side-count
+    457 12     .side-search
+    482 11     .view-tab
+    510 12     .group-head
+    523 11     .group-count
+    578 12     .session-name
+    586 10     .session-time
+    598 12     .rename-input
+    652 12     .session-menu button
+    664 12     .session-empty
+    693 11     .conn-text
+    743 26     .empty h1
+    748 14     .empty p
+    754 13     .empty .hint
+    784 14     .msg-text
+    790 14     .assistant-text
+    806 12     .md-pre
+    841 12     .thinking summary
+    857 11     .thinking-live
+    873 12     .thinking-body
+    948 11     .tool-name
+    959 11     .tool-args
+    967 10     .tool-state
+    996 11     .tool-label
+   1008 11     .tool-section pre
+   1017 11     .tool-pending
+   1078 13     .collab-title
+   1090 11     .collab-status
+   1112 13     .collab-task
+   1129 12     .collab-fold summary
+   1145 11     .fold-label
+   1170 13     .fold-body
+   1182 12     .collab-thinking
+   1224 11     .attachment-chip
+   1255 14     .composer-input
+   1316 12     .brain-selector-button
+   1359 11     .brain-menu-title
+   1372 12     .brain-menu-empty
+   1387 12     .brain-menu-item
+   1449 12     .permission-selector-button
+   1492 11     .permission-menu-title
+   1527 12     .permission-menu-name
+   1533 11     .permission-menu-desc
+   1584 12     .permission-option
+   1612 12     .permission-pref-desc
+   1676 12     .model-selector-button
+   1717 11     .model-menu-title
+   1724 12     .model-menu-empty
+   1738 12     .model-menu-item
+   1781 13     .rightbar-head
+   1802 13     /* ---------- 错误条 ---------- */ .error-banner
+   1842 13     /* ---------- 通用按钮 ---------- */ .btn
+   1873 12     .btn.small
+   1929 13     .settings-nav-item
+   1979 13     .settings-breadcrumb
+   2001 13     .settings-tab
+   2037 16     .panel-head h2
+   2043 12     .panel-desc
+   2048 14     .section-title
+   2065 13     .pref-row
+   2091 14     .form-title
+   2106 12     .form-field
+   2121 13     .form-field input, .form-field textarea
+   2141 13     .form-toggle
+   2157 14     /* 设置页 Brains 分组 */ .brain-group-title
+   2179 12     .brain-section-empty
+   2222 14     .brain-card-name
+   2234 11     .brain-current-badge
+   2239 12     .brain-card-desc
+   2255 11     .brain-tag
+   2288 14     .provider-name
+   2298 11     .provider-badge
+   2314 12     .provider-line
+   2346 14     .empty-state-title
+   2352 12     .empty-state-hint
+   2371 12     .stat-label
+   2376 24     .stat-value
+   2390 12     .data-table
+   2430 11     .field-error
+   2444 12     .connection-notice
+   2467 15     .dialog-title
+   2474 13     .dialog-text
+   2526 12     .approval-tool
+   2537 11     .approval-risk
+   2561 16     .approval-title
+   2575 11     .approval-label
+   2589 12     .approval-detail
+   2598 12     .approval-reason
+   3065 12     .partner-slot-button
+   3101 11     .partner-panel-title
+   3128 12     .partner-enable
+   3146 12     .partner-panel-hint
+   3166 12     .partner-select-button
+   3226 12     .partner-select-empty
+   3233 11     .partner-select-group-title
+   3247 12     .partner-select-item
+   3276 11     .partner-select-desc
+   3317 15     .partner-settings-slot
+   3324 12     .partner-settings-desc
+   3399 12     .partner-field-label
+   3568 13     .workspace-btn
+   3581 14     .topbar-session-title
+   3639 14     .side-row
+   3681 14     .side-list-title
+   3687 11     .side-count
+   3721 13     .side-view-menu button
+   3784 12     .group-head
+   3847 13     .session-name
+   3857 11     .session-time
+   3901 13     .session-menu button
+   3912 12     .session-empty
+   3924 12     .side-footer
+   3968 14     .bubble.user
+   3976 14     .msg-row.assistant
+   4022 14     .composer-input
+   4119 30     .empty-greeting
+   4149 12     .suggestion-chip
+   4208 24     .settings-panel h2
+   4396 24     .empty-greeting
+   4656 20     .md-body h1
+   4660 18     .md-body h2
+   4664 16     .md-body h3
+   4698 12.5   .md-body code
+   4718 13     .md-body table
+   4750 11     .md-body .md-code-head
+   4760 11     .md-body .md-copy
+   4778 12.5   .md-body .md-code code
+   5023 12     .pref-select
+   5063 12     .settings-search input
+   5082 10     .settings-search-kbd
+   5101 11     .settings-nav-title
+   5108 12     .settings-nav-empty
+   5114 11     .settings-version
+   5124 11     .shortcut-key
+   5134 12     .settings-note
+   5144 11     .settings-note code
+   5149 12     .pref-link
+   5208 13     .archive-title
+   5215 11     .archive-time
+   5260 12     .composer-slash-name
+   5266 11     .composer-slash-desc

@@ -9,6 +9,7 @@ import { getBrain } from '@witcode/brains';
 import type {
   ChatMessage,
   ModelProvider,
+  ModelSelection,
   SessionStore,
   SubagentTaskResult,
   ToolCall,
@@ -33,6 +34,12 @@ export interface SubagentServiceOptions {
   workspace: string;
   /** 单次会话最多派发的子智能体数，默认 3。 */
   maxSubagents?: number;
+  /** 最大嵌套层数（运行时读取，默认 3）。 */
+  maxDepth?: () => number;
+  /** 默认 Brain id（运行时读取，默认 coding）。 */
+  defaultBrainId?: () => string;
+  /** 默认模型（运行时读取；不填跟随主会话）。 */
+  model?: () => ModelSelection | undefined;
 }
 
 export interface SubagentSpawnInput {
@@ -90,8 +97,9 @@ export function createSubagentService(options: SubagentServiceOptions): Subagent
       }
 
       const depth = input.depth ?? 0;
-      if (depth >= MAX_SUBAGENT_DEPTH) {
-        throw new Error('子智能体最多 3 层');
+      const maxDepth = options.maxDepth?.() ?? MAX_SUBAGENT_DEPTH;
+      if (depth >= maxDepth) {
+        throw new Error(`子智能体最多 ${maxDepth} 层`);
       }
       if (spawned >= maxSubagents) {
         throw new Error(`子智能体数量已达上限（${maxSubagents}）`);
@@ -103,8 +111,14 @@ export function createSubagentService(options: SubagentServiceOptions): Subagent
         const session = await options.sessions.create(`子任务[L${depth}]:${task.slice(0, 20)}`);
         id = session.id;
 
-        const brain = getBrain(input.brainId ?? DEFAULT_BRAIN_ID);
-        if (!brain) throw new Error(`未知的脑子：${input.brainId ?? DEFAULT_BRAIN_ID}`);
+        const brain = getBrain(
+          input.brainId ?? options.defaultBrainId?.() ?? DEFAULT_BRAIN_ID,
+        );
+        if (!brain) {
+          throw new Error(
+            `未知的脑子：${input.brainId ?? options.defaultBrainId?.() ?? DEFAULT_BRAIN_ID}`,
+          );
+        }
 
         const rules = brain.rules.length
           ? ['## 硬规则', ...brain.rules.map((rule) => `- ${rule}`)].join('\n')
@@ -124,13 +138,23 @@ export function createSubagentService(options: SubagentServiceOptions): Subagent
         const pendingFiles = new Map<string, string>();
         let streamed = '';
 
+        const selection = options.model?.();
+        const provider: ModelProvider = selection
+          ? {
+              id: options.provider.id,
+              stream(request, signal) {
+                return options.provider.stream({ ...request, selection }, signal);
+              },
+            }
+          : options.provider;
+
         const result = await runAgentLoop(
           [
             { role: 'system', content: system },
             { role: 'user', content: task },
           ],
           {
-            provider: options.provider,
+            provider,
             tools: scopeTools(options.tools, input.tools),
             workspace: options.workspace,
             sessionId: id,

@@ -1,5 +1,18 @@
 import { useEffect, useState } from 'react';
 import type { SessionSummary } from '@witcode/protocol';
+import {
+  IconBlocks,
+  IconCheck,
+  IconClock,
+  IconFilter,
+  IconFolder,
+  IconMessagePlus,
+  IconMore,
+  IconPanelLeft,
+  IconSearch,
+  IconSettings,
+  IconX,
+} from './icons';
 
 export type NavKey = 'chat' | 'plugins' | 'tasks';
 
@@ -22,10 +35,12 @@ interface Props {
   onToggleCollapse: () => void;
 }
 
-const NAV_ITEMS: Array<{ key: NavKey; glyph: string; label: string }> = [
-  { key: 'chat', glyph: '▤', label: '会话' },
-  { key: 'plugins', glyph: '◈', label: '插件' },
-  { key: 'tasks', glyph: '◷', label: '任务' },
+type ViewMode = 'recent' | 'project';
+
+const NAV_ITEMS: Array<{ key: NavKey; label: string; Glyph: typeof IconBlocks }> = [
+  { key: 'chat', label: '会话', Glyph: IconMessagePlus },
+  { key: 'plugins', label: '插件', Glyph: IconBlocks },
+  { key: 'tasks', label: '任务', Glyph: IconClock },
 ];
 
 function relativeTime(timestamp: number): string {
@@ -55,18 +70,27 @@ export function WorkspaceSidebar({
   onToggleCollapse,
 }: Props) {
   const [query, setQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [view, setView] = useState<ViewMode>('recent');
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
-    if (!menuFor) return;
+    if (!menuFor && !viewMenuOpen) return;
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
-      if (!target?.closest('.session-menu-wrap')) setMenuFor(null);
+      if (!target?.closest('.session-menu-wrap, .side-view-wrap')) {
+        setMenuFor(null);
+        setViewMenuOpen(false);
+      }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuFor(null);
+      if (event.key === 'Escape') {
+        setMenuFor(null);
+        setViewMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -74,7 +98,7 @@ export function WorkspaceSidebar({
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [menuFor]);
+  }, [menuFor, viewMenuOpen]);
 
   const filtered = query.trim()
     ? sessions.filter((session) => session.title.toLowerCase().includes(query.trim().toLowerCase()))
@@ -101,91 +125,137 @@ export function WorkspaceSidebar({
       aria-label="工作台侧栏"
       style={collapsed ? undefined : { width, flexBasis: width }}
     >
+      {/* ZCode 侧栏顶部是 48px 留白/拖拽区，没有品牌 logo。 */}
       <div className="side-top">
-        <div className="side-brand-row">
-          <div className="brand" title="WitCode">
-            <span className="brand-glyph" aria-hidden="true">W</span>
-            <span className="brand-name">WitCode</span>
-          </div>
-          <div className="side-top-actions">
-            <button
-              type="button"
-              className="icon-btn drawer-close"
-              aria-label="关闭会话列表"
-              onClick={onClose}
-            >
-              ×
-            </button>
-            <button
-              type="button"
-              className="icon-btn collapse-toggle"
-              aria-label={collapsed ? '展开会话列表' : '收起会话列表'}
-              title={collapsed ? '展开会话列表' : '收起会话列表'}
-              onClick={onToggleCollapse}
-            >
-              {collapsed ? '»' : '«'}
-            </button>
-          </div>
-        </div>
-        <button type="button" className="new-session" onClick={onNew}>
-          <span className="new-session-plus" aria-hidden="true">+</span>
-          <span className="new-session-label">新建会话</span>
+        <button
+          type="button"
+          className="icon-btn drawer-close"
+          aria-label="关闭会话列表"
+          onClick={onClose}
+        >
+          <IconX size={16} />
+        </button>
+        <button
+          type="button"
+          className="icon-btn collapse-toggle"
+          aria-label={collapsed ? '展开会话列表' : '收起会话列表'}
+          title={collapsed ? '展开会话列表' : '收起会话列表'}
+          onClick={onToggleCollapse}
+        >
+          <IconPanelLeft size={16} />
         </button>
       </div>
 
-      <nav className="side-nav" aria-label="主导航">
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className={activeNav === item.key ? 'nav-item active' : 'nav-item'}
-            title={item.label}
-            aria-current={activeNav === item.key ? 'page' : undefined}
-            onClick={() => onNavigate(item.key)}
-          >
-            <span className="nav-glyph" aria-hidden="true">{item.glyph}</span>
-            <span className="nav-label">{item.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="side-sessions">
-        <div className="side-section-head">
-          <span className="side-section-label">会话</span>
-          <span className="side-count">{sessions.length}</span>
-        </div>
-
-        <div className="side-tools">
-          <div className="side-search-wrap">
-            <span className="search-glyph" aria-hidden="true">⌕</span>
-            <input
-              className="side-search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="搜索会话"
-              aria-label="搜索会话"
-            />
-          </div>
-          <div className="view-toggle" role="group" aria-label="会话视图">
-            <button type="button" className="view-tab active" aria-pressed="true">
-              按最近
+      <div className="side-primary">
+        <button type="button" className="side-row side-new" onClick={onNew}>
+          <IconMessagePlus size={16} />
+          <span className="side-row-label">新建会话</span>
+        </button>
+        {NAV_ITEMS.map((item) => {
+          const Glyph = item.Glyph;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              className={activeNav === item.key ? 'side-row active' : 'side-row'}
+              title={item.label}
+              aria-current={activeNav === item.key ? 'page' : undefined}
+              onClick={() => onNavigate(item.key)}
+            >
+              <Glyph size={16} />
+              <span className="side-row-label">{item.label}</span>
+              {activeNav === item.key ? (
+                <span className="side-row-dot" aria-hidden="true" />
+              ) : null}
             </button>
+          );
+        })}
+      </div>
+
+      <div className="side-list-head">
+        <span className="side-list-title">会话</span>
+        <span className="side-count">{sessions.length}</span>
+        <span className="side-head-actions">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="搜索会话"
+            title="搜索会话"
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((value) => !value)}
+          >
+            <IconSearch size={14} />
+          </button>
+          <div className="side-view-wrap">
             <button
               type="button"
-              className="view-tab"
-              aria-pressed="false"
-              title="按项目视图即将上线"
-              disabled
+              className="icon-btn"
+              aria-label="会话视图"
+              title="会话视图"
+              aria-expanded={viewMenuOpen}
+              onClick={() => setViewMenuOpen((value) => !value)}
             >
-              按项目
+              <IconFilter size={14} />
             </button>
+            {viewMenuOpen ? (
+              <div className="side-view-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={view === 'recent'}
+                  onClick={() => {
+                    setView('recent');
+                    setViewMenuOpen(false);
+                  }}
+                >
+                  <span className="menu-check">{view === 'recent' ? <IconCheck size={14} /> : null}</span>
+                  按最近
+                </button>
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={view === 'project'}
+                  disabled
+                  title="按项目视图即将上线"
+                >
+                  <span className="menu-check" />
+                  按项目
+                </button>
+              </div>
+            ) : null}
           </div>
-        </div>
+        </span>
+      </div>
 
+      {searchOpen ? (
+        <div className="side-search-row">
+          <IconSearch size={14} />
+          <input
+            className="side-search"
+            autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="搜索会话"
+            aria-label="搜索会话"
+          />
+          {query ? (
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="清空搜索"
+              onClick={() => setQuery('')}
+            >
+              <IconX size={12} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="side-sessions">
         <div className="session-scroll">
           <div className="workspace-group">
             <div className="group-head">
-              <span className="folder-glyph" aria-hidden="true">▱</span>
+              <IconFolder size={14} />
               <span className="group-name">{workspaceName}</span>
               <span className="group-count">{filtered.length}</span>
             </div>
@@ -241,7 +311,7 @@ export function WorkspaceSidebar({
                         aria-expanded={menuFor === session.id}
                         onClick={() => setMenuFor((value) => (value === session.id ? null : session.id))}
                       >
-                        …
+                        <IconMore size={14} />
                       </button>
                       {menuFor === session.id ? (
                         <div className="session-menu" role="menu">
@@ -287,7 +357,7 @@ export function WorkspaceSidebar({
           title="设置"
           onClick={onOpenSettings}
         >
-          ⚙
+          <IconSettings size={16} />
         </button>
       </div>
     </aside>

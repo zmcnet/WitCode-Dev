@@ -9,6 +9,19 @@ export {
   providerToPublic,
 } from './registry.ts';
 export { createUsageStore } from './usage.ts';
+export {
+  cleanModelSettings,
+  isModelEnabled,
+  modelContextWindow,
+  modelMaxOutputTokens,
+  modelSettingsFor,
+  normalizeModelSettings,
+} from './model-settings.ts';
+export {
+  modelsUrl,
+  PROVIDER_TEST_TIMEOUT_MS,
+  testProviderConnection,
+} from './provider-test.ts';
 export { createModelRouter } from './router.ts';
 export { createModelGateway } from './gateway.ts';
 export type {

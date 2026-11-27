@@ -221,3 +221,58 @@ test('默认路径取自 WITCODE_DATA_DIR 并自动创建目录', async () => {
     else process.env.WITCODE_DATA_DIR = previous;
   }
 });
+
+test('归档会话从主列表隐藏，恢复后回到主列表', async () => {
+  const dir = tempDir();
+  const store = storeIn(dir);
+  const session = await store.create('要归档的会话');
+  const keep = await store.create('保留的会话');
+
+  await store.archive(session.id, true);
+  const main = await store.list();
+  assert.deepEqual(main.map((item) => item.id), [keep.id]);
+  const archived = await store.listArchived();
+  assert.deepEqual(archived.map((item) => item.id), [session.id]);
+  assert.equal(archived[0]?.archived, true);
+
+  // 归档不删消息，恢复后仍可读取。
+  await store.append(session.id, { role: 'user', content: '还在' });
+  await store.archive(session.id, false);
+  const restored = await store.get(session.id);
+  assert.equal(restored?.messages[0]?.content, '还在');
+  assert.deepEqual((await store.list()).map((item) => item.id).sort(), [keep.id, session.id].sort());
+});
+
+test('旧库缺少 archived 列时自动升级', async () => {
+  const dir = tempDir();
+  const dbPath = join(dir, 'witcode.db');
+  const db = new DatabaseSync(dbPath);
+  db.exec(`
+    CREATE TABLE sessions (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT NOT NULL,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      tool_call_id TEXT,
+      tool_name TEXT,
+      tool_calls TEXT,
+      created_at INTEGER NOT NULL
+    );
+  `);
+  db.prepare('INSERT INTO sessions (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)')
+    .run('legacy', '旧会话', 1, 1);
+  db.close();
+
+  const store = createSqliteSessionStore({ dbPath });
+  const list = await store.list();
+  assert.equal(list[0]?.title, '旧会话');
+  await store.archive('legacy', true);
+  assert.equal((await store.list()).length, 0);
+  assert.equal((await store.listArchived()).length, 1);
+});

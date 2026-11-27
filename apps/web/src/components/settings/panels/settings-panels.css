@@ -1,0 +1,395 @@
+/* ZCode 风格设置面板：行式设置 + 分组卡片。所有选择器以 .settings-panels 前缀约束作用域。 */
+
+.settings-panels {
+  width: 100%;
+  color: var(--text);
+}
+
+.settings-panels *,
+.settings-panels *::before,
+.settings-panels *::after {
+  box-sizing: border-box;
+}
+
+.settings-panels__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-panels__head {
+  margin-bottom: 2px;
+}
+
+.settings-panels__head h2 {
+  margin: 0;
+  font-size: calc(16px * var(--font-scale, 1));
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.settings-panels__head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.settings-panels__group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.settings-panels__group-title {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--faint);
+  font-size: calc(12px * var(--font-scale, 1));
+  font-weight: 500;
+}
+
+.settings-panels__group-body {
+  padding: 0 14px;
+}
+
+.settings-panels__row {
+  display: grid;
+  grid-template-columns: 1fr 192px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.settings-panels__group-body > :first-child {
+  border-top: 0;
+}
+
+.settings-panels__row-info {
+  min-width: 0;
+}
+
+.settings-panels__label {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.settings-panels__desc {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.settings-panels__control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-panels__block {
+  padding: 12px 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.settings-panels__group-body > :first-child {
+  border-top: 0;
+}
+
+.settings-panels__block-control {
+  margin-top: 10px;
+}
+
+.settings-panels__static {
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.settings-panels__code {
+  padding: 1px 5px;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: ui-monospace, Consolas, 'Courier New', monospace;
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.settings-panels__link {
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.settings-panels__link:hover {
+  color: var(--muted);
+}
+
+.settings-panels__kbd {
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: calc(11px * var(--font-scale, 1));
+  white-space: nowrap;
+}
+
+/* ---------- 控件 ---------- */
+
+.settings-panels__select,
+.settings-panels__input {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--input);
+  color: var(--text);
+  font-family: inherit;
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.settings-panels__select:hover:not(:disabled),
+.settings-panels__input:hover:not(:disabled) {
+  border-color: var(--faint);
+}
+
+.settings-panels__select:focus-visible,
+.settings-panels__input:focus-visible,
+.settings-panels__textarea:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.settings-panels__select:disabled,
+.settings-panels__input:disabled {
+  color: var(--faint);
+  opacity: 0.7;
+}
+
+.settings-panels__number {
+  text-align: right;
+}
+
+.settings-panels__btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: calc(12px * var(--font-scale, 1));
+  cursor: pointer;
+}
+
+.settings-panels__btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.settings-panels__btn:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.settings-panels__btn:disabled {
+  color: var(--faint);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings-panels__btn.is-primary {
+  border-color: var(--faint);
+  background: var(--selected);
+  font-weight: 500;
+}
+
+.settings-panels__btn.is-primary:hover:not(:disabled) {
+  background: var(--panel-3);
+}
+
+.settings-panels__switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-3);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.settings-panels__switch:hover:not(:disabled) {
+  border-color: var(--faint);
+}
+
+.settings-panels__switch:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.settings-panels__switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings-panels__switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.settings-panels__switch.is-on {
+  border-color: var(--faint);
+  background: var(--selected);
+}
+
+.settings-panels__switch.is-on .settings-panels__switch-knob {
+  transform: translateX(16px);
+  background: var(--text);
+}
+
+.settings-panels__perm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settings-panels__perm-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: calc(12px * var(--font-scale, 1));
+  cursor: pointer;
+}
+
+.settings-panels__perm-btn:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.settings-panels__perm-btn:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.settings-panels__perm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings-panels__perm-btn.is-active {
+  border-color: var(--faint);
+  background: var(--selected);
+  color: var(--text);
+}
+
+/* ---------- 编辑器 ---------- */
+
+.settings-panels__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-panels__editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.settings-panels__editor-bar .settings-panels__code {
+  overflow-wrap: anywhere;
+}
+
+.settings-panels__textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--input);
+  color: var(--text);
+  font-family: inherit;
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.settings-panels__textarea::placeholder {
+  color: var(--faint);
+}
+
+.settings-panels__editor-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-panels__count {
+  color: var(--faint);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.settings-panels__count.is-max {
+  color: var(--muted);
+}
+
+.settings-panels__editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-panels__note {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.7;
+}
+
+/* ---------- 窄屏降级：控件换到下一行 ---------- */
+
+@media (max-width: 640px) {
+  .settings-panels__row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .settings-panels__control {
+    justify-content: flex-start;
+  }
+
+  .settings-panels__select,
+  .settings-panels__input {
+    max-width: 192px;
+  }
+}

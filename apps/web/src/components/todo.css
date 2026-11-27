@@ -1,0 +1,172 @@
+/* DSH 风格待办停靠条。颜色取自 ZCode 主题变量，深浅主题随 .theme-light 自动切换。 */
+.todo-dock {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 8px;
+  border: 1px solid var(--border, #28323d);
+  border-radius: var(--radius-md, 8px);
+  background: var(--panel, #141a21);
+  color: var(--text, #e6edf3);
+  font-size: calc(12.5px * var(--font-scale, 1));
+  overflow: hidden;
+}
+
+.todo-dock__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 8px 4px 10px;
+}
+
+.todo-dock__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-dock__count svg {
+  color: var(--ok, #4ade80);
+}
+
+.todo-dock__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  color: var(--muted, #8b98a8);
+}
+
+.todo-dock__current svg {
+  flex-shrink: 0;
+  color: var(--brand, #38bdf8);
+}
+
+.todo-dock__current-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-dock__toggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--muted, #8b98a8);
+}
+
+.todo-dock__toggle:hover {
+  background: var(--panel-2, #1a222b);
+  color: var(--text, #e6edf3);
+}
+
+.todo-dock__toggle:focus-visible {
+  outline: 1px solid var(--brand, #38bdf8);
+  outline-offset: 1px;
+}
+
+.todo-dock__chevron--open {
+  transform: rotate(180deg);
+}
+
+.todo-dock__list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 2px 8px 8px;
+  border-top: 1px solid var(--border-soft, #222b35);
+  list-style: none;
+}
+
+.todo-dock__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 2px;
+  line-height: 1.5;
+}
+
+.todo-dock__status {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--faint, #667485);
+}
+
+.todo-dock__item--in_progress {
+  margin-inline: -4px;
+  padding-inline: 6px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--brand-soft, rgba(56, 189, 248, 0.12));
+}
+
+.todo-dock__item--in_progress .todo-dock__status {
+  color: var(--brand, #38bdf8);
+}
+
+.todo-dock__item--completed .todo-dock__status {
+  color: var(--ok, #4ade80);
+}
+
+.todo-dock__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.todo-dock__item--pending .todo-dock__text {
+  color: var(--muted, #8b98a8);
+}
+
+.todo-dock__item--in_progress .todo-dock__text {
+  color: var(--text, #e6edf3);
+  font-weight: 600;
+}
+
+.todo-dock__item--completed .todo-dock__text {
+  color: var(--muted, #8b98a8);
+  text-decoration: line-through;
+}
+
+@keyframes todo-dock-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.todo-dock__pulse {
+  animation: todo-dock-pulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todo-dock__pulse {
+    animation: none;
+  }
+}
+
+/* 窄屏只收紧内边距，保持普通文档流，不覆盖下方输入框。 */
+@media (max-width: 600px) {
+  .todo-dock {
+    font-size: calc(12px * var(--font-scale, 1));
+  }
+
+  .todo-dock__summary {
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  .todo-dock__list {
+    padding-inline: 6px;
+  }
+}

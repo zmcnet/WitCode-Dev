@@ -12,7 +12,9 @@ import type {
   ModelRequest,
   ModelSelection,
   ModelService,
+  ProviderModelSettings,
   ProviderPublic,
+  RoutingStrategy,
   UsageRecord,
   UsageSummary,
 } from '@witcode/protocol';
@@ -26,6 +28,8 @@ export interface StoredProvider {
   modelIds: string[];
   /** 模型上下文窗口（tokens）；产品硬约束 ≥1M。 */
   contextWindow: number;
+  /** 单模型覆盖配置；空对象表示全部回落到 provider 级默认值。 */
+  modelSettings: Record<string, ProviderModelSettings>;
   enabled: boolean;
   createdAt: number;
   updatedAt: number;
@@ -36,6 +40,8 @@ export interface ProviderRegistry {
   get(id: string): Promise<StoredProvider | null>;
   save(provider: StoredProvider): Promise<void>;
   remove(id: string): Promise<void>;
+  /** 按给定 id 顺序重排并原子落盘；未列出的保持原相对顺序排在后面。 */
+  reorder(ids: string[]): Promise<StoredProvider[]>;
 }
 
 export interface UsageStore {
@@ -44,7 +50,7 @@ export interface UsageStore {
   summary(): Promise<UsageSummary>;
 }
 
-export type RoutingStrategy = 'order' | 'rotate';
+export type { RoutingStrategy };
 
 export interface RouterOptions {
   registry: ProviderRegistry;
@@ -52,6 +58,8 @@ export interface RouterOptions {
   /** 根据落盘配置 + 指定模型创建一个可用的 provider 实例。 */
   createProvider(provider: StoredProvider, model: string): ModelService;
   strategy?: RoutingStrategy;
+  /** 路由策略持久化文件；不传则只存内存。 */
+  strategyFile?: string;
   /** 没有任何可用 provider 时的兜底（环境变量或回声）。 */
   fallback?: ModelService;
   /** selection 持久化文件；不传则只存内存。 */
@@ -62,14 +70,20 @@ export interface RouterOptions {
 export interface ModelRouter extends ModelService {
   getSelection(): ModelSelection | null;
   setSelection(selection: ModelSelection | null): Promise<void>;
+  getStrategy(): RoutingStrategy;
+  setStrategy(strategy: RoutingStrategy): Promise<void>;
 }
 
 export interface GatewayOptions {
   dataDir?: string;
   strategy?: RoutingStrategy;
+  /** 直接指定 routing.json 路径；优先于 dataDir。 */
+  routingFile?: string;
   fallback?: ModelService;
   /** 测试用：替换默认的 OpenAI 适配器工厂。 */
   createProvider?: (provider: StoredProvider, model: string) => ModelService;
+  /** 测试用：替换 testProvider 使用的 fetch（默认使用全局 fetch）。 */
+  fetchImpl?: typeof fetch;
 }
 
 /** 内部使用的公开视图转换，便于 registry 与 gateway 共用。 */

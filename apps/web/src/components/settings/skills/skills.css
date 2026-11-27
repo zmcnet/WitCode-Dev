@@ -1,0 +1,472 @@
+/* 设置 → 技能：仅使用 ZCode 设计变量，不引入新依赖。 */
+.skills-panel {
+  width: 100%;
+  max-width: 896px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.skills-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.skills-title {
+  margin: 0;
+  font-size: calc(16px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.skills-desc {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.skills-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.skills-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+  white-space: nowrap;
+}
+
+.skills-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+}
+
+.skills-btn:disabled,
+.skills-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skills-btn-primary {
+  border-color: var(--brand-strong);
+  background: var(--brand-strong);
+  color: #06131c;
+  font-weight: 600;
+}
+
+.skills-btn-primary:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+
+.skills-btn-danger {
+  border-color: var(--danger-border);
+  background: transparent;
+  color: var(--danger-fg);
+}
+
+.skills-btn-danger:hover:not(:disabled) {
+  border-color: var(--warn);
+}
+
+.skills-icon-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(18px * var(--font-scale, 1));
+  line-height: 1;
+}
+
+.skills-icon-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.skills-icon-btn.danger:hover:not(:disabled) {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.skills-btn:focus-visible,
+.skills-icon-btn:focus-visible,
+.skills-switch:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.skills-notice {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 行式列表 ---------- */
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.skills-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--panel);
+}
+
+.skills-row:last-child {
+  border-bottom: 0;
+}
+
+.skills-row:hover {
+  background: var(--panel-2);
+}
+
+.skills-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.skills-row-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skills-row-name {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+  font-weight: 500;
+}
+
+.skills-row-desc {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.skills-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.skills-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.skills-tag.on {
+  border-color: var(--brand-border);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+/* ---------- 空态 ---------- */
+.skills-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.skills-empty-title {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+}
+
+.skills-empty-hint {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 编辑弹窗 ---------- */
+.skills-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.skills-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+
+.skills-modal-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.skills-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.skills-modal-head h3 {
+  margin: 0;
+  font-size: calc(15px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.skills-modal-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.skills-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  overflow: auto;
+}
+
+.skills-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skills-field-label {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.skills-input {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.skills-input::placeholder,
+.skills-textarea::placeholder {
+  color: var(--faint);
+}
+
+.skills-input:focus,
+.skills-textarea:focus {
+  outline: 0;
+  border-color: var(--brand-border);
+}
+
+.skills-input[aria-invalid='true'] {
+  border-color: var(--warn);
+}
+
+.skills-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.skills-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.skills-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-3);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.skills-switch.on {
+  border-color: var(--brand-border);
+  background: var(--brand-soft);
+}
+
+.skills-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.skills-switch.on .skills-switch-thumb {
+  background: var(--brand);
+  transform: translateX(16px);
+}
+
+.skills-form-error {
+  margin: 0;
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.skills-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ---------- 删除确认 ---------- */
+.skills-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.skills-confirm {
+  width: min(400px, 100%);
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.skills-confirm h4 {
+  margin: 0;
+  font-size: calc(15px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.skills-confirm p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.skills-confirm-error {
+  color: var(--warn) !important;
+}
+
+.skills-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .skills-head {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .skills-row-actions {
+    flex-direction: column;
+  }
+
+  .skills-backdrop,
+  .skills-confirm-backdrop {
+    padding: 0;
+  }
+
+  .skills-modal {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .skills-confirm {
+    width: calc(100% - 32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skills-switch,
+  .skills-switch-thumb {
+    transition: none;
+  }
+}
+
+/* Light 主题：主按钮底色为 --brand-strong(#000)，文字需反白。 */
+.theme-light .skills-btn-primary {
+  color: #ffffff;
+}

@@ -40,6 +40,7 @@ function makeProvider(
     apiKey: 'test-key',
     modelIds,
     contextWindow,
+    modelSettings: {},
     enabled,
     createdAt: 0,
     updatedAt: 0,
@@ -69,6 +70,9 @@ function makeHarness(
     },
     async save() {},
     async remove() {},
+    async reorder() {
+      return providers.slice();
+    },
   };
   const usages: UsageRecord[] = [];
   const usage: UsageStore = {
@@ -381,4 +385,95 @@ test('setSelection 拒绝窗口不足 1M 的 provider', async () => {
     harness.router.setSelection({ providerId: 'missing', model: 'm1' }),
     /未知的提供商/,
   );
+});
+
+test('自动路由跳过 disabled 模型，整 provider 全禁用时一并跳过', async () => {
+  const p1 = makeProvider('p1', ['off', 'on']);
+  p1.modelSettings = { off: { enabled: false } };
+  const p2 = makeProvider('p2', ['off']);
+  p2.modelSettings = { off: { enabled: false } };
+  const harness = makeHarness([p1, p2, makeProvider('p3')], 'order');
+  harness.services.set(
+    'p1:on',
+    fakeService('p1', [{ type: 'text', text: 'from p1' }, { type: 'done' }]),
+  );
+  harness.services.set(
+    'p3:m1',
+    fakeService('p3', [{ type: 'text', text: 'from p3' }, { type: 'done' }]),
+  );
+
+  assert.deepEqual(await collect(harness.router), [
+    { type: 'text', text: 'from p1' },
+    { type: 'done' },
+  ]);
+  assert.deepEqual(harness.calls, ['p1:on'], '不得选中 off，也不得尝试全禁用的 p2');
+
+  harness.calls.length = 0;
+  harness.services.set('p1:on', fakeService('p1', [{ type: 'error', message: '429' }]));
+  assert.deepEqual(await collect(harness.router), [
+    { type: 'text', text: 'from p3' },
+    { type: 'done' },
+  ]);
+  assert.deepEqual(harness.calls, ['p1:on', 'p3:m1'], 'p2 必须被完全跳过');
+});
+
+test('setSelection 拒绝禁用模型，但允许同 provider 的其它模型', async () => {
+  const provider = makeProvider('p1', ['off', 'on']);
+  provider.modelSettings = { off: { enabled: false } };
+  const harness = makeHarness([provider], 'order');
+
+  await assert.rejects(
+    harness.router.setSelection({ providerId: 'p1', model: 'off' }),
+    /模型已禁用：p1\/off/,
+  );
+  assert.equal(harness.router.getSelection(), null);
+
+  await harness.router.setSelection({ providerId: 'p1', model: 'on' });
+  assert.deepEqual(harness.router.getSelection(), { providerId: 'p1', model: 'on' });
+});
+
+test('路由策略可运行时切换并持久化，重启后恢复且 rotate 行为不变', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'witcode-strategy-'));
+  try {
+    const file = join(dir, 'routing.json');
+    const providers = [makeProvider('p1'), makeProvider('p2'), makeProvider('p3')];
+    const registerServices = (harness: Harness): void => {
+      for (const id of ['p1', 'p2', 'p3']) {
+        harness.services.set(
+          `${id}:m1`,
+          fakeService(id, [{ type: 'text', text: id }, { type: 'done' }]),
+        );
+      }
+    };
+
+    const first = makeHarness(providers, 'order', { strategyFile: file });
+    assert.equal(first.router.getStrategy(), 'order');
+    registerServices(first);
+    assert.deepEqual((await collect(first.router))[0], { type: 'text', text: 'p1' });
+
+    await first.router.setStrategy('rotate');
+    assert.equal(first.router.getStrategy(), 'rotate');
+    assert.equal(JSON.parse(await readFile(file, 'utf8')), 'rotate');
+    await assert.rejects(
+      first.router.setStrategy('random' as RoutingStrategy),
+      /未知的路由策略/,
+    );
+    assert.equal(first.router.getStrategy(), 'rotate');
+
+    const second = makeHarness(providers, 'order', { strategyFile: file });
+    assert.equal(second.router.getStrategy(), 'rotate', '重启后必须从 routing.json 恢复');
+    registerServices(second);
+    const firstTexts = [(await collect(second.router))[0], (await collect(second.router))[0]];
+    assert.deepEqual(firstTexts, [
+      { type: 'text', text: 'p1' },
+      { type: 'text', text: 'p2' },
+    ]);
+
+    await second.router.setStrategy('order');
+    assert.equal(second.router.getStrategy(), 'order');
+    assert.deepEqual((await collect(second.router))[0], { type: 'text', text: 'p1' });
+    assert.equal(JSON.parse(await readFile(file, 'utf8')), 'order');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });

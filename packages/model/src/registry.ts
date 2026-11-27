@@ -9,7 +9,15 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import type { ProviderInput, ProviderPublic } from '@witcode/protocol';
+import {
+  cleanModelSettings,
+  MAX_OUTPUT_TOKENS,
+  MIN_CONTEXT_WINDOW,
+  normalizeModelSettings,
+} from './model-settings.ts';
 import type { ProviderRegistry, StoredProvider } from './types.ts';
+
+export { MAX_OUTPUT_TOKENS, MIN_CONTEXT_WINDOW } from './model-settings.ts';
 
 interface RegistryOptions {
   filePath?: string;
@@ -21,15 +29,6 @@ export function defaultProvidersPath(dataDir?: string): string {
   const base = dataDir ?? process.env.WITCODE_DATA_DIR ?? path.join(os.homedir(), '.witcode');
   return path.join(base, 'providers.json');
 }
-
-/**
- * 产品硬约束：模型上下文窗口不得低于 1M tokens。
- * 输入预算据此拆分：200K 给 system（脑子），800K 给正常会话。
- */
-export const MIN_CONTEXT_WINDOW = 1_000_000;
-
-/** 统一最大输出：所有 provider 强制 128K，防止模型默认值太小。 */
-export const MAX_OUTPUT_TOKENS = 128_000;
 
 /** 转成可返回给界面的视图，绝不暴露明文 key。 */
 export function providerToPublic(provider: StoredProvider): ProviderPublic {
@@ -45,6 +44,7 @@ export function providerToPublic(provider: StoredProvider): ProviderPublic {
     baseUrl: provider.baseUrl,
     modelIds: [...provider.modelIds],
     contextWindow: provider.contextWindow,
+    modelSettings: { ...provider.modelSettings },
     enabled: provider.enabled,
     hasApiKey: apiKey.length > 0,
     apiKeyHint,
@@ -68,6 +68,7 @@ export function applyProviderInput(input: ProviderInput, existing?: StoredProvid
     );
   }
   const contextWindow = Math.floor(rawWindow);
+  const modelSettings = cleanModelSettings(input.modelSettings, modelIds, existing?.modelSettings);
 
   return {
     id,
@@ -76,6 +77,7 @@ export function applyProviderInput(input: ProviderInput, existing?: StoredProvid
     apiKey,
     modelIds,
     contextWindow,
+    modelSettings,
     enabled: input.enabled ?? true,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -97,6 +99,10 @@ function isStoredProvider(value: unknown): value is StoredProvider {
     && Array.isArray(item.modelIds) && item.modelIds.every((entry) => typeof entry === 'string')
     && (item.contextWindow === undefined
       || (typeof item.contextWindow === 'number' && Number.isFinite(item.contextWindow)))
+    && (item.modelSettings === undefined
+      || (typeof item.modelSettings === 'object'
+        && item.modelSettings !== null
+        && !Array.isArray(item.modelSettings)))
     && typeof item.enabled === 'boolean'
     && typeof item.createdAt === 'number'
     && typeof item.updatedAt === 'number';
@@ -134,6 +140,8 @@ class FileProviderRegistry implements ProviderRegistry {
       ...provider,
       // 旧版 providers.json 没有该字段：按产品底线补 1M，避免历史数据被丢弃。
       contextWindow: provider.contextWindow ?? MIN_CONTEXT_WINDOW,
+      // 旧版数据没有模型级覆盖配置：补空对象，全部回落到 provider 默认值。
+      modelSettings: normalizeModelSettings(provider.modelSettings),
     }));
   }
 
@@ -159,8 +167,32 @@ class FileProviderRegistry implements ProviderRegistry {
     });
   }
 
+  reorder(ids: string[]): Promise<StoredProvider[]> {
+    return this.enqueue(async () => {
+      const providers = await this.list();
+      const byId = new Map(providers.map((provider) => [provider.id, provider]));
+      const seen = new Set<string>();
+      const ordered: StoredProvider[] = [];
+
+      for (const id of ids) {
+        if (seen.has(id)) continue;
+        const provider = byId.get(id);
+        if (!provider) continue;
+        seen.add(id);
+        ordered.push(provider);
+      }
+      // 未列出的保持原相对顺序，排在指定 id 之后。
+      for (const provider of providers) {
+        if (!seen.has(provider.id)) ordered.push(provider);
+      }
+
+      await this.writeAll(ordered);
+      return ordered;
+    });
+  }
+
   /** 同一实例内串行执行读-改-写，避免并发写坏文件。 */
-  private enqueue(task: () => Promise<void>): Promise<void> {
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
     const result = this.tail.then(task);
     this.tail = result.then(() => undefined, () => undefined);
     return result;

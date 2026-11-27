@@ -11,10 +11,12 @@ import type {
   ModelRequest,
   ModelSelection,
   ModelService,
+  RoutingStrategy,
   UsageRecord,
 } from '@witcode/protocol';
-import type { ModelRouter, RouterOptions, StoredProvider } from './types.ts';
+import { isModelEnabled, modelContextWindow } from './model-settings.ts';
 import { MIN_CONTEXT_WINDOW } from './registry.ts';
+import type { ModelRouter, RouterOptions, StoredProvider } from './types.ts';
 
 const ROUTER_ID = 'model-router';
 
@@ -57,6 +59,26 @@ function loadSelection(file: string | undefined): ModelSelection | null {
     // 文件不存在或内容损坏都视为未设置。
   }
   return null;
+}
+
+function isRoutingStrategy(value: unknown): value is RoutingStrategy {
+  return value === 'order' || value === 'rotate';
+}
+
+/** 同时兼容纯字符串与 { strategy } 两种历史/手写格式。 */
+function loadStrategy(file: string | undefined, fallback: RoutingStrategy): RoutingStrategy {
+  if (!file) return fallback;
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(file, 'utf8'));
+    if (isRoutingStrategy(parsed)) return parsed;
+    if (typeof parsed === 'object' && parsed !== null && 'strategy' in parsed) {
+      const inner = (parsed as { strategy?: unknown }).strategy;
+      if (isRoutingStrategy(inner)) return inner;
+    }
+  } catch {
+    // 文件不存在或内容损坏都使用传入的默认策略。
+  }
+  return fallback;
 }
 
 async function writeJsonAtomic(file: string, payload: string): Promise<void> {
@@ -131,6 +153,8 @@ async function* consumeAttempt(
 export function createModelRouter(options: RouterOptions): ModelRouter {
   const now = options.now ?? (() => Date.now());
   let selection = loadSelection(options.selectionFile);
+  /** 运行时可切换；切换后仍按同一套 order/rotate 逻辑挑选候选。 */
+  let strategy = loadStrategy(options.strategyFile, options.strategy ?? 'order');
   let rotateIndex = 0;
   /** 本轮 rotate 候选列表在原 enabled 列表中的起点。 */
   let rotationStart = 0;
@@ -141,19 +165,24 @@ export function createModelRouter(options: RouterOptions): ModelRouter {
       return provider ? [{ provider, model: request.selection.model }] : [];
     }
 
-    const enabled = (await options.registry.list()).filter(
-      (provider) => provider.enabled && provider.modelIds.length > 0,
-    );
-    if (options.strategy === 'rotate' && enabled.length > 0) {
-      const start = ((rotateIndex % enabled.length) + enabled.length) % enabled.length;
+    // 自动路由只考虑启用的 provider 中未禁用的模型；禁用的模型仍会由 gateway 返回给 UI 展示。
+    const available = (await options.registry.list())
+      .map((provider) => ({
+        provider,
+        models: provider.modelIds.filter((model) => isModelEnabled(provider, model)),
+      }))
+      .filter((item) => item.provider.enabled && item.models.length > 0);
+
+    if (strategy === 'rotate' && available.length > 0) {
+      const start = ((rotateIndex % available.length) + available.length) % available.length;
       rotationStart = start;
-      const ordered: StoredProvider[] = [];
-      for (let offset = 0; offset < enabled.length; offset += 1) {
-        ordered.push(enabled[(start + offset) % enabled.length]!);
+      const ordered: Array<(typeof available)[number]> = [];
+      for (let offset = 0; offset < available.length; offset += 1) {
+        ordered.push(available[(start + offset) % available.length]!);
       }
-      return ordered.map((provider) => ({ provider, model: provider.modelIds[0]! }));
+      return ordered.map((item) => ({ provider: item.provider, model: item.models[0]! }));
     }
-    return enabled.map((provider) => ({ provider, model: provider.modelIds[0]! }));
+    return available.map((item) => ({ provider: item.provider, model: item.models[0]! }));
   }
 
   async function writeUsage(
@@ -194,10 +223,14 @@ export function createModelRouter(options: RouterOptions): ModelRouter {
         if (!provider) {
           throw new Error(`未知的提供商：${next.providerId}`);
         }
-        if (provider.contextWindow < MIN_CONTEXT_WINDOW) {
+        const window = modelContextWindow(provider, next.model);
+        if (window < MIN_CONTEXT_WINDOW) {
           throw new Error(
-            `上下文窗口不足 ${MIN_CONTEXT_WINDOW} tokens：${next.providerId}/${next.model}（${provider.contextWindow}）`,
+            `上下文窗口不足 ${MIN_CONTEXT_WINDOW} tokens：${next.providerId}/${next.model}（${window}）`,
           );
+        }
+        if (!isModelEnabled(provider, next.model)) {
+          throw new Error(`模型已禁用：${next.providerId}/${next.model}`);
         }
       }
       selection = next ? { providerId: next.providerId, model: next.model } : null;
@@ -212,6 +245,25 @@ export function createModelRouter(options: RouterOptions): ModelRouter {
         await writeJsonAtomic(file, `${JSON.stringify(selection)}\n`);
       } catch (error) {
         console.warn(`[witcode] selection 写入失败: ${errorMessage(error)}`);
+      }
+    },
+
+    getStrategy(): RoutingStrategy {
+      return strategy;
+    },
+
+    async setStrategy(next: RoutingStrategy): Promise<void> {
+      if (!isRoutingStrategy(next)) {
+        throw new Error(`未知的路由策略：${String(next)}`);
+      }
+      strategy = next;
+      const file = options.strategyFile;
+      if (!file) return;
+
+      try {
+        await writeJsonAtomic(file, `${JSON.stringify(strategy)}\n`);
+      } catch (error) {
+        console.warn(`[witcode] 路由策略写入失败: ${errorMessage(error)}`);
       }
     },
 
@@ -264,7 +316,7 @@ export function createModelRouter(options: RouterOptions): ModelRouter {
         await writeUsage(providerId, candidate.model, startedAt, outcome);
 
         if (outcome.ok) {
-          if (!explicit && options.strategy === 'rotate' && candidate.provider) {
+          if (!explicit && strategy === 'rotate' && candidate.provider) {
             rotateIndex = (rotationStart + index + 1) % candidates.length;
           }
           return;

@@ -15,10 +15,18 @@ import type {
   ModelRequest,
   ProviderInput,
   ProviderPublic,
+  ProviderTestResult,
+  RoutingStrategy,
   UsageRecord,
   UsageSummary,
 } from '@witcode/protocol';
+import {
+  modelContextWindow,
+  modelMaxOutputTokens,
+  modelSettingsFor,
+} from './model-settings.ts';
 import { createOpenAIProvider, createProviderFromEnv } from './openai.ts';
+import { testProviderConnection } from './provider-test.ts';
 import {
   applyProviderInput,
   createProviderRegistry,
@@ -32,6 +40,7 @@ import type { GatewayOptions } from './types.ts';
 export async function createModelGateway(options: GatewayOptions = {}): Promise<ModelGateway> {
   const dataDir =
     options.dataDir ?? process.env.WITCODE_DATA_DIR ?? path.join(os.homedir(), '.witcode');
+  const routingFile = options.routingFile ?? path.join(dataDir, 'routing.json');
 
   const registry = createProviderRegistry({ dataDir });
   const usage = createUsageStore({ dataDir });
@@ -52,6 +61,7 @@ export async function createModelGateway(options: GatewayOptions = {}): Promise<
     usage,
     createProvider,
     strategy: options.strategy ?? 'order',
+    strategyFile: routingFile,
     selectionFile: path.join(dataDir, 'selection.json'),
     fallback: options.fallback ?? createProviderFromEnv() ?? undefined,
   });
@@ -68,6 +78,11 @@ export async function createModelGateway(options: GatewayOptions = {}): Promise<
 
     getSelection: () => router.getSelection(),
     setSelection: (selection) => router.setSelection(selection),
+
+    async getRoutingStrategy(): Promise<RoutingStrategy> {
+      return router.getStrategy();
+    },
+    setRoutingStrategy: (strategy) => router.setStrategy(strategy),
 
     async listProviders(): Promise<ProviderPublic[]> {
       return (await registry.list()).map(providerToPublic);
@@ -90,18 +105,36 @@ export async function createModelGateway(options: GatewayOptions = {}): Promise<
       }
     },
 
+    async reorderProviders(ids: string[]): Promise<ProviderPublic[]> {
+      const reordered = await registry.reorder(ids);
+      return reordered.map(providerToPublic);
+    },
+
+    async testProvider(id: string): Promise<ProviderTestResult> {
+      const provider = await registry.get(id);
+      if (!provider) {
+        return { providerId: id, ok: false, latencyMs: 0, error: `未知的提供商：${id}` };
+      }
+      return testProviderConnection(provider, options.fetchImpl);
+    },
+
     async listModels(): Promise<ModelInfo[]> {
       const providers = await registry.list();
-      return providers
-        .filter((provider) => provider.enabled)
-        .flatMap((provider) =>
-          provider.modelIds.map((id) => ({
+      // 禁用模型也要返回供 UI 展示；是否参与自动路由由 router 决定。
+      return providers.flatMap((provider) =>
+        provider.modelIds.map((id): ModelInfo => {
+          const settings = modelSettingsFor(provider, id);
+          return {
             providerId: provider.id,
             providerName: provider.name,
             id,
-            contextWindow: provider.contextWindow,
-          })),
-        );
+            displayName: settings.displayName,
+            contextWindow: modelContextWindow(provider, id),
+            maxOutputTokens: modelMaxOutputTokens(provider, id),
+            enabled: settings.enabled ?? provider.enabled,
+          };
+        }),
+      );
     },
 
     listUsage: (limit?: number): Promise<UsageRecord[]> => usage.list(limit),

@@ -86,8 +86,21 @@ WITCODE_MODEL_MODE=scripted pnpm dev:server
 | **伙伴**：2 个槽位、只读、独立脑子与模型、共享完整历史 | ✅ |
 | **子智能体**：独立会话、权限透传、最多 3 层 | ✅ |
 | 单端口部署：页面 + `/ws` 同在 21004 | ✅ |
+| **设置页**：ZCode 分组导航 + 搜索 + 常规/外观/模型/快捷键/个性化/行为/记忆/子智能体/插件/MCP/技能/命令/统计/项目/归档/数据/关于 | ✅ |
+| **模型配置（Magpie 风格）**：行式提供商、模型级窗口/输出/别名、连接测试、拖拽序、order/rotate 路由 | ✅ |
+| **插件管理（DSH 风格）**：内置能力包启停、组件级开关、Brain 插件 JSON 安装/卸载 | ✅ |
+| **技能 / 斜杠命令**：本地 CRUD，`use_skill` 工具 + `/name` 展开 | ✅ |
+| **MCP**：stdio 服务器配置、工具注册、重连、状态 | ✅ |
+| **个性化 / 记忆**：用户指令与项目记忆在线编辑并注入 system prompt | ✅ |
+| **服务端归档**：归档/恢复不删消息，设置页可管理 | ✅ |
+| **DSH 对齐**：Todo（todo_write + 输入框面板）、Web（web_fetch/web_search）、自动化（every/daily）、Hooks（Pre/PostToolUse 等）、后台任务（run_background/job_*）、Goal（set/get/update_goal）、文件编辑（edit_file/apply_patch/glob）、子智能体独立模型 | ✅ |
+| **右栏 Dock**：文件树/预览、Git status/diff、真实 PTY 终端、工作流详情；可拖宽 | ✅ |
+| **代码插件体系**：manifest + 本地安装/启停/卸载、工具贡献、设置 schema 表单、右栏 iframe 面板、同权限运行警告 | ✅ |
+| **工作流（ZCode 对齐）**：模型写 JS 编排脚本，`agent()/ask()/phase()/artifact()`，独立子进程 + 子智能体执行，阶段/产物落盘 | ✅ |
+| **界面字号**：0.85–1.3 缩放，文本随设置变化、布局不溢出 | ✅ |
+| 主题：深色 / 浅色 / 跟随系统 | ✅ |
 | 右栏文件/Git/终端面板 | ⏳ |
-| 插件安装 / 市场 / 主题 | ⏳ |
+| 插件市场 / 主题市场 | ⏳ |
 
 ---
 
@@ -155,7 +168,7 @@ pnpm -r test               # 单元测试
 cd apps/server && node --test e2e/*.test.mjs   # 端到端（5 个用例）
 ```
 
-当前：**129 个单测 + 5 个 e2e 全绿**。
+当前：**331 个单测 + 5 个 e2e 全绿**。
 
 ---
 

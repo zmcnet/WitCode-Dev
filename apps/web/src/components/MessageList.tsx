@@ -2,27 +2,8 @@ import { useEffect, useRef } from 'react';
 import type { BrainSummary, PartnerConfig } from '@witcode/protocol';
 import type { Message, PartnerCard, SubagentCard } from '../ui-types';
 import { PartnerCardView, SubagentCardView } from './CollabCards';
+import { Markdown } from './Markdown';
 import { ToolCallCard } from './ToolCallCard';
-
-/** 只处理围栏代码块，不引入 Markdown 库；其余内容按纯文本换行渲染。 */
-function renderBody(text: string) {
-  return text.split('```').map((part, index) => {
-    if (index % 2 === 1) {
-      const newline = part.indexOf('\n');
-      const code = (newline >= 0 ? part.slice(newline + 1) : part).replace(/^\n/, '');
-      return (
-        <pre className="md-pre" key={index}>
-          <code>{code}</code>
-        </pre>
-      );
-    }
-    return part ? (
-      <span className="md-text" key={index}>
-        {part}
-      </span>
-    ) : null;
-  });
-}
 
 function Thinking({ text, streaming }: { text: string; streaming?: boolean }) {
   return (
@@ -43,12 +24,24 @@ type FeedItem =
   | { kind: 'partner'; order: number; card: PartnerCard }
   | { kind: 'subagent'; order: number; card: SubagentCard };
 
+function greeting(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 9) return '早上好';
+  if (hour >= 9 && hour < 12) return '上午好';
+  if (hour >= 12 && hour < 14) return '中午好';
+  if (hour >= 14 && hour < 18) return '下午好';
+  if (hour >= 18 && hour < 23) return '晚上好';
+  return '夜深了';
+}
+
 interface MessageListProps {
   messages: Message[];
   partnerCards: PartnerCard[];
   subagentCards: SubagentCard[];
   partners: PartnerConfig[];
   brains: BrainSummary[];
+  /** 设置里可关闭思考过程展示。 */
+  showReasoning?: boolean;
 }
 
 export function MessageList({
@@ -57,6 +50,7 @@ export function MessageList({
   subagentCards,
   partners,
   brains,
+  showReasoning = true,
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -85,11 +79,9 @@ export function MessageList({
 
   if (feed.length === 0) {
     return (
-      <div className="empty">
-        <div className="empty-mark" aria-hidden="true">W</div>
-        <h1>WitCode</h1>
-        <p>一个 Web 优先的 Coding Harness。</p>
-        <p className="hint">在下面输入一句话，开始一段会话。</p>
+      <div className="empty draft-empty">
+        <div className="empty-watermark" aria-hidden="true">W</div>
+        <p className="empty-greeting">{greeting()}</p>
       </div>
     );
   }
@@ -125,12 +117,12 @@ export function MessageList({
 
         return (
           <div className="msg-row assistant" key={message.id} data-order={item.order}>
-            {message.reasoning ? (
+            {showReasoning && message.reasoning ? (
               <Thinking text={message.reasoning} streaming={message.streaming} />
             ) : null}
             {message.text || message.streaming ? (
               <div className="assistant-text">
-                {renderBody(message.text)}
+                <Markdown text={message.text} />
                 {message.streaming ? <span className="caret" /> : null}
               </div>
             ) : null}

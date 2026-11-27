@@ -1,0 +1,562 @@
+/* ZCode 右侧停靠栏。颜色全部取自 styles.css 的主题变量，深浅主题自动适配。 */
+.dock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  height: 100%;
+  min-width: 240px;
+  max-width: 720px;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.dock__resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  width: 4px;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.dock__resize:hover,
+.dock__resize:active {
+  background: var(--brand, #38bdf8);
+}
+
+.dock__tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 48px;
+  height: 48px;
+  padding: 0 6px 0 10px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--panel);
+}
+
+.dock__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: calc(12.5px * var(--font-scale, 1));
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dock__tab:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.05));
+  color: var(--text);
+}
+
+.dock__tab svg {
+  color: var(--faint);
+}
+
+.dock__tab--active {
+  background: var(--selected, rgba(255, 255, 255, 0.1));
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dock__tab--active svg {
+  color: var(--brand);
+}
+
+.dock__close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.dock__close:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.05));
+  color: var(--text);
+}
+
+.dock__tab:focus-visible,
+.dock__close:focus-visible,
+.dock-icon-btn:focus-visible,
+.dock-row:focus-visible,
+.dock-crumb:focus-visible,
+.dock-text-btn:focus-visible {
+  outline: 1px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.dock__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-left: 4px;
+  overflow: hidden;
+}
+
+/* ---------- 通用面板骨架 ---------- */
+.dock-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dock-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.dock-panel__title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: calc(12.5px * var(--font-scale, 1));
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-panel__scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 6px 10px;
+}
+
+.dock-icon-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.dock-icon-btn:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.05));
+  color: var(--text);
+}
+
+.dock-back svg {
+  transform: rotate(90deg);
+}
+
+.dock-text-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: calc(12px * var(--font-scale, 1));
+  cursor: pointer;
+}
+
+.dock-text-btn:hover {
+  background: var(--panel-3);
+}
+
+/* ---------- 空态 / 加载 / 错误 ---------- */
+.dock-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 80px;
+  padding: 32px 16px;
+  color: var(--muted);
+  font-size: calc(12.5px * var(--font-scale, 1));
+  line-height: 1.5;
+  text-align: center;
+}
+
+.dock-state--loading {
+  color: var(--faint);
+}
+
+.dock-state--error {
+  color: var(--warn);
+}
+
+/* ---------- 文件页 ---------- */
+.dock-crumbs {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.dock-crumb-group {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.dock-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: calc(12px * var(--font-scale, 1));
+  cursor: pointer;
+}
+
+.dock-crumb:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.05));
+  color: var(--text);
+}
+
+.dock-crumb--current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dock-crumb__sep {
+  color: var(--faint);
+}
+
+.dock-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: calc(12.5px * var(--font-scale, 1));
+  text-align: left;
+  cursor: pointer;
+}
+
+.dock-row:hover {
+  background: var(--hover, rgba(255, 255, 255, 0.05));
+}
+
+.dock-row svg {
+  flex-shrink: 0;
+  color: var(--faint);
+}
+
+.dock-row--dir svg {
+  color: var(--brand);
+}
+
+.dock-row__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-row__size {
+  flex-shrink: 0;
+  color: var(--faint);
+  font-size: calc(11px * var(--font-scale, 1));
+  font-variant-numeric: tabular-nums;
+}
+
+.dock-preview__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.dock-preview__path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  font-size: calc(11.5px * var(--font-scale, 1));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-preview__size {
+  flex-shrink: 0;
+  color: var(--faint);
+  font-size: calc(11px * var(--font-scale, 1));
+  font-variant-numeric: tabular-nums;
+}
+
+.dock-notice {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--brand-soft, rgba(56, 189, 248, 0.12));
+  color: var(--muted);
+  font-size: calc(11.5px * var(--font-scale, 1));
+}
+
+.dock-notice--warn {
+  background: transparent;
+  color: var(--warn);
+}
+
+.dock-code {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 0;
+  overflow: auto;
+  color: var(--text);
+  font-family: 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.dock-code__row {
+  display: flex;
+  min-width: max-content;
+}
+
+.dock-code__ln {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 46px;
+  margin-right: 10px;
+  padding-right: 10px;
+  border-right: 1px solid var(--border-soft);
+  background: var(--panel);
+  color: var(--faint);
+  text-align: right;
+  user-select: none;
+}
+
+.dock-code__text {
+  padding-right: 16px;
+  white-space: pre;
+}
+
+/* ---------- Git 页 ---------- */
+.dock-git__branch {
+  gap: 8px;
+}
+
+.dock-git__branch svg {
+  flex-shrink: 0;
+  color: var(--brand);
+}
+
+.dock-git__branch-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  font-size: calc(12.5px * var(--font-scale, 1));
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-row--change {
+  min-height: 30px;
+}
+
+.dock-status {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--panel-3);
+  color: var(--muted);
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: calc(11px * var(--font-scale, 1));
+  font-weight: 700;
+}
+
+.dock-status--added {
+  color: var(--ok);
+}
+
+.dock-status--deleted,
+.dock-status--untracked {
+  color: var(--warn);
+}
+
+.dock-status--modified {
+  color: var(--brand);
+}
+
+.dock-status--renamed {
+  color: var(--focus, #4099ff);
+}
+
+.dock-git__tag {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--faint);
+  font-size: calc(10px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.dock-git__tag--staged {
+  border-color: var(--brand-border);
+  background: var(--brand-soft, rgba(56, 189, 248, 0.12));
+  color: var(--brand);
+}
+
+.dock-diff {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 0;
+  overflow: auto;
+  color: var(--text);
+  font-family: 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  font-size: calc(11.5px * var(--font-scale, 1));
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.dock-diff__line {
+  min-width: max-content;
+  padding: 0 10px;
+}
+
+.dock-diff__add {
+  background: color-mix(in srgb, var(--ok) 8%, transparent);
+  color: var(--ok);
+}
+
+.dock-diff__del {
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  color: var(--warn);
+}
+
+.dock-diff__hunk {
+  background: var(--brand-soft, rgba(56, 189, 248, 0.12));
+  color: var(--focus, #4099ff);
+}
+
+.dock-diff__meta {
+  color: var(--faint);
+}
+
+/* ---------- 终端页 ---------- */
+.dock-terminal {
+  position: relative;
+}
+
+.dock-terminal__host {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 6px 8px;
+}
+
+.dock-terminal .xterm {
+  height: 100%;
+}
+
+.dock-terminal__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--panel);
+  pointer-events: none;
+}
+
+.dock-terminal__overlay .dock-state {
+  min-height: 0;
+  padding: 16px;
+}
+
+/* ---------- 窄屏：右栏全屏 ---------- */
+@media (max-width: 720px) {
+  .dock {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    border-left: 0;
+  }
+
+  .dock__resize {
+    display: none;
+  }
+
+  .dock__body {
+    padding-left: 0;
+  }
+
+  .dock__tabs {
+    padding-left: 8px;
+  }
+}
+
+.dock__plugin-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--bg);
+}

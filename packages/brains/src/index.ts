@@ -1,4 +1,12 @@
-export { listBrains, listOfficialBrains, getBrain, defaultBrainId, officialBrainIds } from './registry.ts';
+export {
+  listBrains,
+  listOfficialBrains,
+  getBrain,
+  registerBrain,
+  unregisterBrain,
+  defaultBrainId,
+  officialBrainIds,
+} from './registry.ts';
 export { nativeBrain } from './native.ts';
 export { zcodeBrain } from './zcode.ts';
 export { dshBrain } from './dsh.ts';

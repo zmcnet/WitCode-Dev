@@ -1,0 +1,590 @@
+/* 设置 → 自动化：仅使用 ZCode 设计变量，不引入外部依赖。 */
+.automations-panel {
+  width: 100%;
+  max-width: 896px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.automations-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.automations-title {
+  margin: 0;
+  font-size: calc(16px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.automations-desc {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ---------- 通用按钮 ---------- */
+.automations-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+  white-space: nowrap;
+}
+
+.automations-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+}
+
+.automations-btn:disabled,
+.automations-icon-btn:disabled,
+.automations-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.automations-btn:focus-visible,
+.automations-icon-btn:focus-visible,
+.automations-input:focus-visible,
+.automations-textarea:focus-visible,
+.automations-switch:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.automations-btn-primary {
+  border-color: var(--brand-strong);
+  background: var(--brand-strong);
+  color: #06131c;
+  font-weight: 600;
+}
+
+.automations-btn-primary:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+
+.automations-btn-danger {
+  border-color: var(--danger-border);
+  background: transparent;
+  color: var(--danger-fg);
+}
+
+.automations-btn-danger:hover:not(:disabled) {
+  border-color: var(--warn);
+}
+
+.automations-icon-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.automations-icon-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.automations-notice {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-toast {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--text);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 列表行 ---------- */
+.automations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automations-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.automations-row:hover {
+  border-color: var(--brand-border);
+  background: var(--panel-2);
+}
+
+.automations-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.automations-row-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.automations-row-name {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+  font-weight: 500;
+}
+
+.automations-schedule-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.automations-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.automations-tag-ok {
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  color: var(--ok);
+}
+
+.automations-tag-error {
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--warn);
+}
+
+.automations-tag-running {
+  border-color: var(--brand-border);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.automations-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 8px;
+  color: var(--faint);
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.automations-row-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.automations-prompt {
+  display: block;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--muted);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.automations-error {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-left: 2px solid var(--warn);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.automations-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.automations-confirm-text {
+  color: var(--text);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.automations-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.automations-row-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.automations-row-actions .automations-btn {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 空态与骨架 ---------- */
+.automations-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.automations-empty-title {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+}
+
+.automations-empty-hint {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automations-skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+.automations-skeleton-lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automations-skeleton-line,
+.automations-skeleton-tag {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--panel-2), var(--panel-3), var(--panel-2));
+  background-size: 200% 100%;
+  animation: automations-shimmer 1.4s ease-in-out infinite;
+}
+
+.automations-skeleton-line {
+  width: 55%;
+  height: 12px;
+}
+
+.automations-skeleton-line.short {
+  width: 32%;
+}
+
+.automations-skeleton-tag {
+  flex-shrink: 0;
+  width: 52px;
+  height: 18px;
+  border-radius: 999px;
+}
+
+@keyframes automations-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ---------- 弹窗 ---------- */
+.automations-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.automations-modal {
+  width: min(560px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.automations-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.automations-modal-title {
+  margin: 0;
+  font-size: calc(15px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.automations-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.automations-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.automations-label {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-input,
+.automations-textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.automations-input:focus,
+.automations-textarea:focus {
+  outline: 0;
+  border-color: var(--brand-border);
+}
+
+.automations-input::placeholder,
+.automations-textarea::placeholder {
+  color: var(--faint);
+}
+
+.automations-mono,
+.automations-textarea {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.automations-textarea {
+  min-height: 104px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.automations-hint {
+  color: var(--faint);
+  font-size: calc(11px * var(--font-scale, 1));
+  line-height: 1.4;
+}
+
+.automations-enabled {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+/* ---------- 开关 ---------- */
+.automations-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-3);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.automations-switch.on {
+  border-color: var(--brand-border);
+  background: var(--brand-soft);
+}
+
+.automations-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.automations-switch.on .automations-switch-thumb {
+  background: var(--brand);
+  transform: translateX(16px);
+}
+
+.automations-form-error {
+  margin: 0;
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.automations-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ---------- 移动端全屏 ---------- */
+@media (max-width: 640px) {
+  .automations-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .automations-head-actions {
+    justify-content: flex-end;
+  }
+
+  .automations-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .automations-row-side {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .automations-backdrop {
+    padding: 0;
+  }
+
+  .automations-modal {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .automations-skeleton-line,
+  .automations-skeleton-tag {
+    animation: none;
+  }
+
+  .automations-switch,
+  .automations-switch-thumb,
+  .automations-row {
+    transition: none;
+  }
+}
+
+/* Light 主题：主按钮底色为 --brand-strong(#000)，文字需反白。 */
+.theme-light .automations-btn-primary {
+  color: #ffffff;
+}

@@ -1,16 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+  AppSettings,
   ApprovalRequest,
+  AutomationInput,
+  AutomationPublic,
   BrainSummary,
   ClientMessage,
+  FileContent,
+  FileEntry,
+  GitChange,
+  HookConfig,
   ModelInfo,
   ModelSelection,
+  McpServerInput,
+  McpServerPublic,
   PartnerConfig,
   PermissionMode,
+  PluginSummary,
   ProviderInput,
   ProviderPublic,
+  ProviderTestResult,
+  RoutingStrategy,
   ServerMessage,
   SessionSummary,
+  SkillSummary,
+  WorkflowRun,
+  SlashCommand,
   UsageRecord,
   UsageSummary,
 } from '@witcode/protocol';
@@ -18,7 +33,28 @@ import { historyToMessages } from './history';
 import type { Message, PartnerCard, SubagentCard } from './ui-types';
 
 export type View = 'chat' | 'settings';
-export type SettingsTab = 'general' | 'models' | 'brains' | 'partners' | 'plugins' | 'data';
+export type SettingsTab =
+  | 'general'
+  | 'appearance'
+  | 'models'
+  | 'shortcuts'
+  | 'personalization'
+  | 'behavior'
+  | 'memory'
+  | 'brains'
+  | 'partners'
+  | 'subagents'
+  | 'automations'
+  | 'hooks'
+  | 'skills'
+  | 'commands'
+  | 'mcp'
+  | 'plugins'
+  | 'usage'
+  | 'projects'
+  | 'archive'
+  | 'data'
+  | 'about';
 
 /** 服务端尚未下发槽位时的默认脑子；保证界面始终有 2 个槽位可选。 */
 const DEFAULT_PARTNER_BRAINS: Record<1 | 2, string> = { 1: 'profession', 2: 'coding' };
@@ -110,8 +146,30 @@ export function useChat() {
   /** 当前待用户确认的工具调用；同一时刻只展示一个。 */
   const [pendingApproval, setPendingApproval] = useState<ApprovalRequest | null>(null);
   const [usage, setUsage] = useState<UsageData>({ summary: null, records: [] });
+  const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
+  const [personalization, setPersonalization] = useState('');
+  const [memoryText, setMemoryText] = useState('');
+  const [memoryPath, setMemoryPath] = useState('');
+  const [plugins, setPlugins] = useState<PluginSummary[]>([]);
+  const [skills, setSkills] = useState<SkillSummary[]>([]);
+  const [commands, setCommands] = useState<SlashCommand[]>([]);
+  const [mcpServers, setMcpServers] = useState<McpServerPublic[]>([]);
+  const [automations, setAutomations] = useState<AutomationPublic[]>([]);
+  const [hooks, setHooks] = useState<HookConfig[]>([]);
+  const [fileTree, setFileTree] = useState<FileEntry[]>([]);
+  const [treePath, setTreePath] = useState('');
+  const [fileContent, setFileContent] = useState<FileContent | null>(null);
+  const [gitBranch, setGitBranch] = useState('');
+  const [gitChanges, setGitChanges] = useState<GitChange[]>([]);
+  const [gitDiff, setGitDiff] = useState<string | null>(null);
+  const [workflows, setWorkflows] = useState<WorkflowRun[]>([]);
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [todos, setTodos] = useState<import('@witcode/protocol').TodoItem[]>([]);
+  const [routing, setRouting] = useState<RoutingStrategy>('order');
+  const [testingProviderId, setTestingProviderId] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('general');
   const [archivedIds, setArchivedIds] = useState<string[]>([]);
+  const [archivedSessions, setArchivedSessions] = useState<SessionSummary[]>([]);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -120,6 +178,13 @@ export function useChat() {
   /** 消息与协作卡片共用的单调递增到达序号。 */
   const feedSeqRef = useRef(0);
   const pendingRef = useRef<PendingOperation | null>(null);
+  /** providers:test 的等待者：id -> resolve。 */
+  const testWaitersRef = useRef(new Map<string, (result: ProviderTestResult) => void>());
+  /** 插件安装/卸载等待下一次 plugins / error 回包。 */
+  const terminalListenersRef = useRef(new Set<(data: string) => void>());
+  const pluginWaitersRef = useRef<
+    Array<{ resolve: () => void; reject: (error: Error) => void }>
+  >([]);
   /** 与 pendingApproval 同步，供 WebSocket 回包闭包读取，避免重建连接。 */
   const approvalRef = useRef<ApprovalRequest | null>(null);
   const requestSeqRef = useRef(0);
@@ -162,7 +227,320 @@ export function useChat() {
     sendMessage({ type: 'providers:list' });
     sendMessage({ type: 'usage:list' });
     sendMessage({ type: 'partners:list' });
+    sendMessage({ type: 'settings:get' });
+    sendMessage({ type: 'plugins:list' });
+    sendMessage({ type: 'skills:list' });
+    sendMessage({ type: 'commands:list' });
+    sendMessage({ type: 'mcp:list' });
+    sendMessage({ type: 'automations:list' });
+    sendMessage({ type: 'hooks:list' });
   }, [sendMessage]);
+
+  const saveSettings = useCallback(
+    (patch: Partial<AppSettings>) => {
+      setAppSettings((prev) => (prev ? { ...prev, ...patch } : prev));
+      sendMessage({ type: 'settings:set', patch });
+    },
+    [sendMessage],
+  );
+
+  const loadPersonalization = useCallback(() => {
+    sendMessage({ type: 'personalization:get' });
+  }, [sendMessage]);
+
+  const savePersonalization = useCallback(
+    (text: string) => {
+      setPersonalization(text);
+      sendMessage({ type: 'personalization:set', text });
+    },
+    [sendMessage],
+  );
+
+  const loadMemory = useCallback(() => {
+    sendMessage({ type: 'memory:get' });
+  }, [sendMessage]);
+
+  const saveMemory = useCallback(
+    (text: string) => {
+      setMemoryText(text);
+      sendMessage({ type: 'memory:set', text });
+    },
+    [sendMessage],
+  );
+
+  const loadPlugins = useCallback(() => {
+    sendMessage({ type: 'plugins:list' });
+  }, [sendMessage]);
+
+  const loadSkills = useCallback(() => {
+    sendMessage({ type: 'skills:list' });
+  }, [sendMessage]);
+
+  const loadCommands = useCallback(() => {
+    sendMessage({ type: 'commands:list' });
+  }, [sendMessage]);
+
+  const loadMcpServers = useCallback(() => {
+    sendMessage({ type: 'mcp:list' });
+  }, [sendMessage]);
+
+  const setPluginEnabled = useCallback(
+    (pluginId: string, enabled: boolean) => {
+      sendMessage({ type: 'plugins:set', pluginId, enabled });
+    },
+    [sendMessage],
+  );
+
+  const setPluginComponent = useCallback(
+    (pluginId: string, componentId: string, enabled: boolean) => {
+      sendMessage({ type: 'plugins:component', pluginId, componentId, enabled });
+    },
+    [sendMessage],
+  );
+
+  const installPlugin = useCallback(
+    (manifest: string) =>
+      new Promise<void>((resolve, reject) => {
+        pluginWaitersRef.current.push({ resolve, reject });
+        sendMessage({ type: 'plugins:install', manifest });
+      }),
+    [sendMessage],
+  );
+
+  const uninstallPlugin = useCallback(
+    (pluginId: string) =>
+      new Promise<void>((resolve, reject) => {
+        pluginWaitersRef.current.push({ resolve, reject });
+        sendMessage({ type: 'plugins:uninstall', pluginId });
+      }),
+    [sendMessage],
+  );
+
+  const installLocalPlugin = useCallback(
+    (path: string) =>
+      new Promise<void>((resolve, reject) => {
+        pluginWaitersRef.current.push({ resolve, reject });
+        sendMessage({ type: 'plugins:install-local', path });
+      }),
+    [sendMessage],
+  );
+
+  const setPluginConfig = useCallback(
+    (pluginId: string, patch: Record<string, unknown>) =>
+      new Promise<void>((resolve, reject) => {
+        pluginWaitersRef.current.push({ resolve, reject });
+        sendMessage({ type: 'plugins:config', pluginId, patch });
+      }),
+    [sendMessage],
+  );
+
+  const testProvider = useCallback(
+    (id: string) =>
+      new Promise<ProviderTestResult>((resolve) => {
+        testWaitersRef.current.set(id, resolve);
+        setTestingProviderId(id);
+        sendMessage({ type: 'providers:test', id });
+      }),
+    [sendMessage],
+  );
+
+  const saveSkill = useCallback(
+    (skill: SkillSummary) => {
+      setSkills((prev) => {
+        const exists = prev.some((item) => item.id === skill.id);
+        return exists
+          ? prev.map((item) => (item.id === skill.id ? skill : item))
+          : [...prev, skill];
+      });
+      sendMessage({ type: 'skills:save', skill });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const deleteSkill = useCallback(
+    (id: string) => {
+      setSkills((prev) => prev.filter((item) => item.id !== id));
+      sendMessage({ type: 'skills:delete', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const saveCommand = useCallback(
+    (command: SlashCommand) => {
+      setCommands((prev) => {
+        const exists = prev.some((item) => item.name === command.name);
+        return exists
+          ? prev.map((item) => (item.name === command.name ? command : item))
+          : [...prev, command];
+      });
+      sendMessage({ type: 'commands:save', command });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const deleteCommand = useCallback(
+    (name: string) => {
+      setCommands((prev) => prev.filter((item) => item.name !== name));
+      sendMessage({ type: 'commands:delete', name });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const saveMcpServer = useCallback(
+    (server: McpServerInput) => {
+      sendMessage({ type: 'mcp:save', server });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const deleteMcpServer = useCallback(
+    (id: string) => {
+      sendMessage({ type: 'mcp:delete', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const reconnectMcpServer = useCallback(
+    (id: string) => {
+      sendMessage({ type: 'mcp:reconnect', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const loadAutomations = useCallback(() => {
+    sendMessage({ type: 'automations:list' });
+  }, [sendMessage]);
+
+  const saveAutomation = useCallback(
+    (automation: AutomationInput) => {
+      sendMessage({ type: 'automations:save', automation });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const deleteAutomation = useCallback(
+    (id: string) => {
+      sendMessage({ type: 'automations:delete', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const runAutomation = useCallback(
+    (id: string) => {
+      sendMessage({ type: 'automations:run', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const loadHooks = useCallback(() => {
+    sendMessage({ type: 'hooks:list' });
+  }, [sendMessage]);
+
+  const saveHook = useCallback(
+    (hook: HookConfig) => {
+      sendMessage({ type: 'hooks:save', hook });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const deleteHook = useCallback(
+    (id: string) => {
+      sendMessage({ type: 'hooks:delete', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const loadTree = useCallback(
+    (path = '') => {
+      sendMessage({ type: 'files:tree', ...(path ? { path } : {}) });
+    },
+    [sendMessage],
+  );
+
+  const openFile = useCallback(
+    (path: string) => {
+      sendMessage({ type: 'files:read', path });
+    },
+    [sendMessage],
+  );
+
+  const closeFile = useCallback(() => setFileContent(null), []);
+
+  const loadGit = useCallback(() => {
+    sendMessage({ type: 'git:status' });
+  }, [sendMessage]);
+
+  const openGitDiff = useCallback(
+    (path: string) => {
+      sendMessage({ type: 'git:diff', path });
+    },
+    [sendMessage],
+  );
+
+  const closeGitDiff = useCallback(() => setGitDiff(null), []);
+
+  const subscribeTerminal = useCallback((listener: (data: string) => void) => {
+    terminalListenersRef.current.add(listener);
+    return () => {
+      terminalListenersRef.current.delete(listener);
+    };
+  }, []);
+
+  const terminalCreate = useCallback(
+    (cols: number, rows: number) => sendMessage({ type: 'terminal:create', cols, rows }),
+    [sendMessage],
+  );
+  const terminalSend = useCallback(
+    (data: string) => sendMessage({ type: 'terminal:input', data }),
+    [sendMessage],
+  );
+  const terminalResize = useCallback(
+    (cols: number, rows: number) => sendMessage({ type: 'terminal:resize', cols, rows }),
+    [sendMessage],
+  );
+  const terminalClose = useCallback(() => sendMessage({ type: 'terminal:close' }), [sendMessage]);
+
+  const loadWorkflows = useCallback(() => {
+    sendMessage({ type: 'workflows:list' });
+  }, [sendMessage]);
+
+  const selectWorkflow = useCallback((id: string) => setWorkflowId(id), []);
+
+  const cancelWorkflow = useCallback(
+    (id: string) => {
+      sendMessage({ type: 'workflow:cancel', id });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const reorderProviders = useCallback(
+    (ids: string[]) => {
+      sendMessage({ type: 'providers:reorder', ids });
+      return Promise.resolve();
+    },
+    [sendMessage],
+  );
+
+  const setRoutingStrategy = useCallback(
+    (strategy: RoutingStrategy) => {
+      setRouting(strategy);
+      sendMessage({ type: 'routing:set', strategy });
+    },
+    [sendMessage],
+  );
 
   const requestBrains = useCallback(() => {
     sendMessage({ type: 'brains:list' });
@@ -287,6 +665,11 @@ export function useChat() {
       if (message.type === 'sessions') {
         setSessions(message.items);
         setHasSessionList(true);
+        return;
+      }
+
+      if (message.type === 'archived-sessions') {
+        setArchivedSessions(message.items);
         return;
       }
 
@@ -469,6 +852,9 @@ export function useChat() {
       if (message.type === 'error') {
         setBusy(false);
         setError(message.message);
+        for (const waiter of pluginWaitersRef.current.splice(0)) {
+          waiter.reject(new Error(message.message));
+        }
         setMessages((prev) =>
           prev.map((item) =>
             item.streaming ? { ...item, streaming: false } : item,
@@ -493,6 +879,141 @@ export function useChat() {
 
       if (message.type === 'partners') {
         setPartners(normalizePartners(message.items));
+        return;
+      }
+
+      if (message.type === 'settings') {
+        setAppSettings(message.items);
+        return;
+      }
+
+      if (message.type === 'personalization') {
+        setPersonalization(message.text);
+        return;
+      }
+
+      if (message.type === 'memory') {
+        setMemoryText(message.text);
+        setMemoryPath(message.path);
+        return;
+      }
+
+      if (message.type === 'plugins') {
+        setPlugins(message.items);
+        for (const waiter of pluginWaitersRef.current.splice(0)) waiter.resolve();
+        return;
+      }
+
+      if (message.type === 'skills') {
+        setSkills(message.items);
+        return;
+      }
+
+      if (message.type === 'commands') {
+        setCommands(message.items);
+        return;
+      }
+
+      if (message.type === 'mcp') {
+        setMcpServers(message.items);
+        return;
+      }
+
+      if (message.type === 'automations') {
+        setAutomations(message.items);
+        return;
+      }
+
+      if (message.type === 'hooks') {
+        setHooks(message.items);
+        return;
+      }
+
+      if (message.type === 'files:tree') {
+        setTreePath(message.path);
+        setFileTree(message.items);
+        return;
+      }
+
+      if (message.type === 'files:read') {
+        setFileContent(message.file);
+        return;
+      }
+
+      if (message.type === 'git:status') {
+        setGitBranch(message.branch);
+        setGitChanges(message.items);
+        return;
+      }
+
+      if (message.type === 'git:diff') {
+        setGitDiff(message.diff);
+        return;
+      }
+
+      if (message.type === 'workflows') {
+        setWorkflows(message.items);
+        setWorkflowId((prev) => prev ?? message.items[0]?.id ?? null);
+        return;
+      }
+
+      if (message.type === 'workflow') {
+        setWorkflows((prev) => {
+          const next = prev.filter((item) => item.id !== message.run.id);
+          next.unshift(message.run);
+          return next;
+        });
+        setWorkflowId(message.run.id);
+        return;
+      }
+
+      if (message.type === 'terminal:data') {
+        for (const listener of terminalListenersRef.current) listener(message.data);
+        return;
+      }
+
+      if (message.type === 'terminal:exit') {
+        for (const listener of terminalListenersRef.current) {
+          listener(`
+
+[进程已退出，代码 ${message.code}]
+
+`);
+        }
+        return;
+      }
+
+      if (message.type === 'terminal:error') {
+        for (const listener of terminalListenersRef.current) {
+          listener(`
+
+[终端错误] ${message.message}
+
+`);
+        }
+        return;
+      }
+
+      if (message.type === 'todos') {
+        if (!sessionIdRef.current || message.sessionId === sessionIdRef.current) {
+          setTodos(message.items);
+        }
+        return;
+      }
+
+      if (message.type === 'routing') {
+        setRouting(message.strategy);
+        return;
+      }
+
+      if (message.type === 'provider:test') {
+        setTestingProviderId(null);
+        const waiter = testWaitersRef.current.get(message.result.providerId);
+        if (waiter) {
+          testWaitersRef.current.delete(message.result.providerId);
+          waiter(message.result);
+        }
+        if (!message.result.ok) setError(`连接测试失败：${message.result.error ?? '未知错误'}`);
         return;
       }
 
@@ -618,21 +1139,42 @@ export function useChat() {
     setMessages((prev) => prev.map((item) => (item.streaming ? { ...item, streaming: false } : item)));
   }, [sendMessage]);
 
-  /** 会话重命名/归档目前只影响本地列表：协议没有对应消息，不改服务端。 */
-  const renameSession = useCallback((id: string, title: string) => {
-    const next = title.trim();
-    if (!next) return;
-    setSessions((prev) => prev.map((item) => (item.id === id ? { ...item, title: next } : item)));
-  }, []);
+  const renameSession = useCallback(
+    (id: string, title: string) => {
+      const next = title.trim();
+      if (!next) return;
+      setSessions((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, title: next } : item)),
+      );
+      sendMessage({ type: 'session:rename', id, title: next });
+    },
+    [sendMessage],
+  );
 
-  const archiveSession = useCallback((id: string) => {
-    setArchivedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    if (sessionIdRef.current === id) {
-      applySessionId('');
-      setMessages([]);
-      clearCards();
-    }
-  }, [applySessionId, clearCards]);
+  const archiveSession = useCallback(
+    (id: string) => {
+      setArchivedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      sendMessage({ type: 'session:archive', id, archived: true });
+      if (sessionIdRef.current === id) {
+        applySessionId('');
+        setMessages([]);
+        clearCards();
+      }
+    },
+    [applySessionId, clearCards, sendMessage],
+  );
+
+  const restoreSession = useCallback(
+    (id: string) => {
+      setArchivedIds((prev) => prev.filter((item) => item !== id));
+      sendMessage({ type: 'session:archive', id, archived: false });
+    },
+    [sendMessage],
+  );
+
+  const loadArchivedSessions = useCallback(() => {
+    sendMessage({ type: 'list-archived-sessions' });
+  }, [sendMessage]);
 
   const allVisibleSessions: SessionSummary[] = hasSessionList
     ? sessions
@@ -726,6 +1268,9 @@ export function useChat() {
     stop,
     renameSession,
     archiveSession,
+    archivedSessions,
+    restoreSession,
+    loadArchivedSessions,
     newSession,
     openSession,
     view,
@@ -745,6 +1290,73 @@ export function useChat() {
     usage,
     settingsTab,
     setSettingsTab,
+    appSettings,
+    saveSettings,
+    personalization,
+    loadPersonalization,
+    savePersonalization,
+    memoryText,
+    memoryPath,
+    loadMemory,
+    saveMemory,
+    plugins,
+    loadPlugins,
+    setPluginEnabled,
+    setPluginComponent,
+    installPlugin,
+    installLocalPlugin,
+    setPluginConfig,
+    uninstallPlugin,
+    skills,
+    saveSkill,
+    deleteSkill,
+    loadSkills,
+    commands,
+    saveCommand,
+    deleteCommand,
+    loadCommands,
+    mcpServers,
+    saveMcpServer,
+    deleteMcpServer,
+    reconnectMcpServer,
+    loadMcpServers,
+    automations,
+    loadAutomations,
+    saveAutomation,
+    deleteAutomation,
+    runAutomation,
+    hooks,
+    loadHooks,
+    saveHook,
+    deleteHook,
+    todos,
+    fileTree,
+    treePath,
+    loadTree,
+    fileContent,
+    openFile,
+    closeFile,
+    gitBranch,
+    gitChanges,
+    gitDiff,
+    loadGit,
+    openGitDiff,
+    closeGitDiff,
+    subscribeTerminal,
+    terminalCreate,
+    terminalSend,
+    terminalResize,
+    terminalClose,
+    workflows,
+    workflowId,
+    loadWorkflows,
+    selectWorkflow,
+    cancelWorkflow,
+    routing,
+    setRoutingStrategy,
+    testingProviderId,
+    testProvider,
+    reorderProviders,
     saving,
     deletingId,
     openSettings,

@@ -240,3 +240,126 @@ test('旧 providers.json 缺少 contextWindow 时按 1M 补齐', async () => {
     assert.equal(provider?.contextWindow, 1_000_000);
   });
 });
+
+test('modelSettings 清洗：裁剪模型、trim、布尔校验、输出上限与回落', () => {
+  const stored = applyProviderInput({
+    ...sampleInput(),
+    modelIds: ['m1', 'm2'],
+    modelSettings: {
+      m1: {
+        displayName: '  GPT-4o  ',
+        contextWindow: 2_000_000,
+        maxOutputTokens: 500_000,
+        enabled: 'yes' as unknown as boolean,
+      },
+      m2: { displayName: '   ', enabled: false },
+      removed: { displayName: 'not-in-modelIds' },
+    },
+  });
+
+  assert.deepEqual(stored.modelSettings, {
+    m1: { displayName: 'GPT-4o', contextWindow: 2_000_000, maxOutputTokens: 128_000 },
+    m2: { enabled: false },
+  });
+  assert.deepEqual(providerToPublic(stored).modelSettings, stored.modelSettings);
+  assert.deepEqual(applyProviderInput({ ...sampleInput(), modelIds: ['m1'] }).modelSettings, {});
+});
+
+test('modelSettings 编辑合并：未提及字段沿用旧值，移除模型时清理', () => {
+  const existing = applyProviderInput({
+    ...sampleInput(),
+    modelIds: ['m1', 'm2'],
+    modelSettings: {
+      m1: { displayName: 'First', enabled: false },
+      m2: { contextWindow: 3_000_000 },
+    },
+  });
+
+  const merged = applyProviderInput(
+    {
+      ...sampleInput(),
+      id: existing.id,
+      modelIds: ['m1'],
+      modelSettings: { m1: { maxOutputTokens: 4_000 } },
+    },
+    existing,
+  );
+  assert.deepEqual(merged.modelSettings, {
+    m1: { displayName: 'First', enabled: false, maxOutputTokens: 4_000 },
+  });
+
+  const untouched = applyProviderInput(
+    { ...sampleInput(), id: existing.id, modelIds: ['m1', 'm2'] },
+    existing,
+  );
+  assert.deepEqual(untouched.modelSettings, existing.modelSettings);
+});
+
+test('modelSettings 的 contextWindow 低于 1M 时拒绝保存并报错', () => {
+  assert.throws(
+    () => applyProviderInput({
+      ...sampleInput(),
+      modelIds: ['m1'],
+      modelSettings: { m1: { contextWindow: 128_000 } },
+    }),
+    /模型 m1 的上下文窗口必须 ≥ 1000000 tokens/,
+  );
+});
+
+test('旧 providers.json 缺 modelSettings 补空对象，脏值被丢弃', async () => {
+  await withTempDir(async (dir) => {
+    const filePath = path.join(dir, 'providers.json');
+    const good = applyProviderInput(sampleInput());
+    await fs.writeFile(
+      filePath,
+      JSON.stringify([
+        {
+          ...good,
+          id: 'legacy',
+          modelSettings: undefined,
+        },
+        {
+          ...good,
+          id: 'dirty',
+          modelSettings: {
+            m1: {
+              displayName: '  kept  ',
+              contextWindow: 900_000,
+              maxOutputTokens: 999_000,
+              enabled: 'yes',
+            },
+            m2: 'not-an-object',
+          },
+        },
+      ]),
+      'utf8',
+    );
+
+    const list = await createProviderRegistry({ filePath }).list();
+    assert.equal(list.length, 2);
+    assert.deepEqual(list[0]?.modelSettings, {});
+    assert.deepEqual(list[1]?.modelSettings, {
+      m1: { displayName: 'kept', maxOutputTokens: 128_000 },
+    });
+  });
+});
+
+test('reorder：指定 id 在前，未列出的保持相对顺序，未知/重复 id 忽略且原子落盘', async () => {
+  await withTempDir(async (dir) => {
+    const filePath = path.join(dir, 'providers.json');
+    const registry = createProviderRegistry({ filePath });
+    const a = applyProviderInput(sampleInput({ name: 'A' }));
+    const b = applyProviderInput(sampleInput({ name: 'B' }));
+    const c = applyProviderInput(sampleInput({ name: 'C' }));
+    await Promise.all([a, b, c].map((provider) => registry.save(provider)));
+
+    const ordered = await registry.reorder([c.id, 'missing', a.id, c.id]);
+    assert.deepEqual(ordered.map((provider) => provider.id), [c.id, a.id, b.id]);
+    assert.deepEqual((await registry.list()).map((provider) => provider.id), [c.id, a.id, b.id]);
+    assert.deepEqual(
+      (await createProviderRegistry({ filePath }).list()).map((provider) => provider.id),
+      [c.id, a.id, b.id],
+    );
+    assert.deepEqual((await fs.readdir(dir)).filter((name) => name.endsWith('.tmp')), []);
+  });
+});

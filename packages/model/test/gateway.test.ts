@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -22,6 +23,24 @@ async function withTempDir(run: (dir: string) => Promise<void>): Promise<void> {
   } finally {
     // Windows 下临时目录偶尔被占用而删不掉，忽略即可。
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  }
+}
+
+async function withServer(
+  handler: (req: IncomingMessage, res: ServerResponse) => void,
+  run: (url: string) => Promise<void>,
+): Promise<void> {
+  const server = createServer(handler);
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== 'string', 'server should listen on a TCP port');
+
+  try {
+    await run(`http://127.0.0.1:${address.port}`);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
   }
 }
 
@@ -288,5 +307,175 @@ test('失败切换：A 返回 error 后 B 成功，usage 至少两条', async ()
     assert.equal(byProvider.get(a.id)?.ok, false);
     assert.equal(byProvider.get(a.id)?.error, '429 rate limited');
     assert.equal(byProvider.get(b.id)?.ok, true);
+  });
+});
+
+test('listModels：模型级覆盖优先，禁用模型仍返回供 UI 展示', async () => {
+  await withTempDir(async (dir) => {
+    const { gateway } = await makeHarness(dir);
+    await gateway.saveProvider({
+      name: 'A',
+      baseUrl: 'https://a.invalid/v1',
+      apiKey: 'sk-models-1234567890',
+      modelIds: ['m1', 'm2', 'm3'],
+      contextWindow: 2_000_000,
+      modelSettings: {
+        m1: {
+          displayName: '  GPT-4o  ',
+          contextWindow: 3_000_000,
+          maxOutputTokens: 32_000,
+          enabled: true,
+        },
+        m3: { enabled: false },
+      },
+    });
+    await gateway.saveProvider({
+      name: 'B',
+      baseUrl: 'https://b.invalid/v1',
+      apiKey: 'sk-models-b-123456',
+      modelIds: ['x'],
+      enabled: false,
+    });
+
+    const models = await gateway.listModels();
+    assert.deepEqual(
+      models.map((model) => [
+        model.id,
+        model.displayName,
+        model.contextWindow,
+        model.maxOutputTokens,
+        model.enabled,
+      ]),
+      [
+        ['m1', 'GPT-4o', 3_000_000, 32_000, true],
+        ['m2', undefined, 2_000_000, 128_000, true],
+        ['m3', undefined, 2_000_000, 128_000, false],
+        ['x', undefined, 1_000_000, 128_000, false],
+      ],
+    );
+    assert.equal(models[0]?.providerName, 'A');
+  });
+});
+
+test('reorderProviders：按 ids 重排并返回脱敏列表，重启后保留顺序', async () => {
+  await withTempDir(async (dir) => {
+    const { gateway } = await makeHarness(dir);
+    const a = await gateway.saveProvider({
+      name: 'A', baseUrl: 'https://a.invalid/v1', apiKey: 'sk-r1-1234567890', modelIds: ['m1'],
+    });
+    const b = await gateway.saveProvider({
+      name: 'B', baseUrl: 'https://b.invalid/v1', apiKey: 'sk-r2-1234567890', modelIds: ['m1'],
+    });
+    const c = await gateway.saveProvider({
+      name: 'C', baseUrl: 'https://c.invalid/v1', apiKey: 'sk-r3-1234567890', modelIds: ['m1'],
+    });
+
+    const reordered = await gateway.reorderProviders([c.id, 'missing', a.id]);
+    assert.deepEqual(reordered.map((provider) => provider.id), [c.id, a.id, b.id]);
+    assert.equal('apiKey' in reordered[0]!, false);
+    assert.equal(JSON.stringify(reordered).includes('sk-r3-1234567890'), false);
+
+    const reopened = await makeHarness(dir);
+    assert.deepEqual(
+      (await reopened.gateway.listProviders()).map((provider) => provider.id),
+      [c.id, a.id, b.id],
+    );
+  });
+});
+
+test('网关路由策略：运行时切换写入 routing.json，重建网关后恢复', async () => {
+  await withTempDir(async (dir) => {
+    const first = await makeHarness(dir);
+    assert.equal(await first.gateway.getRoutingStrategy(), 'order');
+    await first.gateway.setRoutingStrategy('rotate');
+    assert.equal(await first.gateway.getRoutingStrategy(), 'rotate');
+    assert.equal(JSON.parse(await readFile(join(dir, 'routing.json'), 'utf8')), 'rotate');
+
+    const second = await makeHarness(dir);
+    assert.equal(await second.gateway.getRoutingStrategy(), 'rotate');
+    await second.gateway.setRoutingStrategy('order');
+    assert.equal(JSON.parse(await readFile(join(dir, 'routing.json'), 'utf8')), 'order');
+  });
+});
+
+test('testProvider：GET /v1/models 带 Bearer key，解析模型数量', async () => {
+  await withTempDir(async (dir) => {
+    await withServer(
+      (req, res) => {
+        assert.equal(req.url, '/v1/models');
+        assert.equal(req.headers.authorization, 'Bearer sk-test-provider-key');
+        req.resume();
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ data: [{ id: 'm1' }, { id: 'm2' }, { name: 'no-id' }] }));
+      },
+      async (url) => {
+        const { gateway } = await makeHarness(dir);
+        const saved = await gateway.saveProvider({
+          name: 'A',
+          baseUrl: `${url}/v1///`,
+          apiKey: 'sk-test-provider-key',
+          modelIds: ['m1'],
+        });
+        const result = await gateway.testProvider(saved.id);
+        assert.equal(result.providerId, saved.id);
+        assert.equal(result.ok, true);
+        assert.equal(result.modelCount, 2);
+        assert.ok(result.latencyMs >= 0);
+        assert.equal(result.error, undefined);
+      },
+    );
+  });
+});
+
+test('testProvider：/models 结尾直接使用，401 与未知 id 返回 ok:false 而不抛错', async () => {
+  await withTempDir(async (dir) => {
+    await withServer(
+      (req, res) => {
+        assert.equal(req.url, '/models');
+        req.resume();
+        res.writeHead(401, { 'content-type': 'text/plain' });
+        res.end('unauthorized');
+      },
+      async (url) => {
+        const { gateway } = await makeHarness(dir);
+        const saved = await gateway.saveProvider({
+          name: 'A',
+          baseUrl: `${url}/models/`,
+          apiKey: 'bad-key',
+          modelIds: ['m1'],
+        });
+
+        const failed = await gateway.testProvider(saved.id);
+        assert.equal(failed.providerId, saved.id);
+        assert.equal(failed.ok, false);
+        assert.match(failed.error ?? '', /401/);
+        assert.equal(failed.modelCount, undefined);
+
+        const unknown = await gateway.testProvider('not-found');
+        assert.equal(unknown.ok, false);
+        assert.match(unknown.error ?? '', /未知的提供商/);
+      },
+    );
+  });
+});
+
+test('testProvider：响应不是合法 models JSON 时返回错误而不是抛错', async () => {
+  await withTempDir(async (dir) => {
+    await withServer(
+      (req, res) => {
+        req.resume();
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ objects: [] }));
+      },
+      async (url) => {
+        const { gateway } = await makeHarness(dir);
+        const saved = await gateway.saveProvider({
+          name: 'A', baseUrl: url, apiKey: 'sk-bad-response', modelIds: ['m1'],
+        });
+        const result = await gateway.testProvider(saved.id);
+        assert.equal(result.ok, false);
+        assert.match(result.error ?? '', /data 数组/);
+      },
+    );
   });
 });

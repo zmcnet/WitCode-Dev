@@ -57,7 +57,7 @@ function createCollabProvider(): ModelProvider {
       const system = request.messages.find((item) => item.role === 'system')?.content ?? '';
 
       // 伙伴：只给意见。
-      if (system.includes('作为伙伴')) {
+      if (system.includes('你正在作为伙伴')) {
         yield {
           type: 'text',
           text: '伙伴意见：先补测试再改实现；注意旧会话的兼容；风险点在权限边界。',
@@ -67,7 +67,7 @@ function createCollabProvider(): ModelProvider {
       }
 
       // 子智能体：只做自己的任务。
-      if (system.includes('子智能体')) {
+      if (system.includes('你是被主智能体派发的子智能体')) {
         yield {
           type: 'text',
           text: '子任务完成：README 第一行是 `# WitCode`。',

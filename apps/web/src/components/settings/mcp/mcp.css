@@ -1,0 +1,560 @@
+/* 设置 → MCP 服务器：仅使用 ZCode 设计变量，不复制 DSH 品牌元素。 */
+.mcp-panel {
+  width: 100%;
+  max-width: 896px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.mcp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mcp-title {
+  margin: 0;
+  font-size: calc(16px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.mcp-desc {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.mcp-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ---------- 通用按钮 ---------- */
+.mcp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+  white-space: nowrap;
+}
+
+.mcp-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+}
+
+.mcp-btn:focus-visible,
+.mcp-icon-btn:focus-visible,
+.mcp-input:focus-visible,
+.mcp-textarea:focus-visible,
+.mcp-switch:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.mcp-btn-primary {
+  border-color: var(--brand-strong);
+  background: var(--brand-strong);
+  color: #06131c;
+  font-weight: 600;
+}
+
+.mcp-btn-primary:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+
+.mcp-btn-danger {
+  border-color: var(--danger-border);
+  background: transparent;
+  color: var(--danger-fg);
+}
+
+.mcp-btn-danger:hover:not(:disabled) {
+  border-color: var(--warn);
+}
+
+.mcp-icon-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(18px * var(--font-scale, 1));
+  line-height: 1;
+}
+
+.mcp-icon-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.mcp-notice {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.mcp-toast {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--text);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 列表行 ---------- */
+.mcp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.mcp-row:hover {
+  border-color: var(--brand-border);
+  background: var(--panel-2);
+}
+
+.mcp-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mcp-row-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mcp-row-name {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+  font-weight: 500;
+}
+
+.mcp-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.mcp-tag-connected {
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  color: var(--ok);
+}
+
+.mcp-tag-error {
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--warn);
+}
+
+.mcp-tag-disabled {
+  border-color: var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+}
+
+.mcp-tools {
+  color: var(--faint);
+  font-size: calc(11px * var(--font-scale, 1));
+}
+
+.mcp-command {
+  display: block;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--muted);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcp-error {
+  margin: 8px 0 0;
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mcp-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.mcp-confirm-text {
+  color: var(--text);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.mcp-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mcp-row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mcp-row-actions .mcp-btn {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 空态与骨架 ---------- */
+.mcp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.mcp-empty-title {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+}
+
+.mcp-empty-hint {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.mcp-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp-skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+.mcp-skeleton-lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp-skeleton-line,
+.mcp-skeleton-tag {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--panel-2), var(--panel-3), var(--panel-2));
+  background-size: 200% 100%;
+  animation: mcp-shimmer 1.4s ease-in-out infinite;
+}
+
+.mcp-skeleton-line {
+  width: 55%;
+  height: 12px;
+}
+
+.mcp-skeleton-line.short {
+  width: 32%;
+}
+
+.mcp-skeleton-tag {
+  flex-shrink: 0;
+  width: 52px;
+  height: 18px;
+  border-radius: 999px;
+}
+
+@keyframes mcp-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ---------- 弹窗 ---------- */
+.mcp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.mcp-modal {
+  width: min(560px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.mcp-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.mcp-modal-title {
+  margin: 0;
+  font-size: calc(15px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.mcp-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.mcp-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 10px;
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.mcp-warning svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warn);
+}
+
+.mcp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mcp-label {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.mcp-input,
+.mcp-textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.mcp-input:focus,
+.mcp-textarea:focus {
+  outline: 0;
+  border-color: var(--brand-border);
+}
+
+.mcp-input::placeholder,
+.mcp-textarea::placeholder {
+  color: var(--faint);
+}
+
+.mcp-mono,
+.mcp-textarea {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.mcp-textarea {
+  min-height: 72px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.mcp-hint {
+  color: var(--faint);
+  font-size: calc(11px * var(--font-scale, 1));
+  line-height: 1.4;
+}
+
+.mcp-enabled {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+/* ---------- 开关 ---------- */
+.mcp-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-3);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.mcp-switch.on {
+  border-color: var(--brand-border);
+  background: var(--brand-soft);
+}
+
+.mcp-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.mcp-switch.on .mcp-switch-thumb {
+  background: var(--brand);
+  transform: translateX(16px);
+}
+
+.mcp-form-error {
+  margin: 0;
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.mcp-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ---------- 移动端全屏 ---------- */
+@media (max-width: 640px) {
+  .mcp-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mcp-head-actions {
+    justify-content: flex-end;
+  }
+
+  .mcp-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mcp-row-actions {
+    justify-content: flex-end;
+  }
+
+  .mcp-backdrop {
+    padding: 0;
+  }
+
+  .mcp-modal {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcp-skeleton-line,
+  .mcp-skeleton-tag {
+    animation: none;
+  }
+
+  .mcp-switch,
+  .mcp-switch-thumb,
+  .mcp-row {
+    transition: none;
+  }
+}
+
+/* Light 主题：主按钮底色为 --brand-strong(#000)，文字需反白。 */
+.theme-light .mcp-btn-primary {
+  color: #ffffff;
+}

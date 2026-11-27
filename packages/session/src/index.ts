@@ -15,6 +15,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type {
   ChatMessage,
   SessionRecord,
+  SessionSearchHit,
   SessionStore,
   SessionSummary,
   ToolCall,
@@ -55,6 +56,28 @@ function toChatMessage(row: MessageRow): ChatMessage {
   return message;
 }
 
+const SNIPPET_RADIUS = 60;
+
+/** 找到命中位置（LIKE 默认 ASCII 大小写不敏感），再做片段与空白折叠。 */
+function hitIndex(content: string, query: string): number {
+  const lowered = content.toLowerCase();
+  const needle = query.toLowerCase();
+  let index = lowered.indexOf(needle);
+  // 极少数 Unicode 字符大小写折叠会改变长度，此时下标不再对应原文，退回区分大小写匹配。
+  if (index === -1 || lowered.length !== content.length) {
+    index = content.indexOf(query);
+  }
+  return index === -1 ? 0 : index;
+}
+
+function buildSnippet(content: string, query: string): string {
+  const index = hitIndex(content, query);
+  const start = Math.max(0, index - SNIPPET_RADIUS);
+  const end = Math.min(content.length, index + query.length + SNIPPET_RADIUS);
+  const text = content.slice(start, end).replace(/\s+/g, ' ').trim();
+  return `…${text}…`;
+}
+
 export function createSqliteSessionStore(options: { dbPath?: string } = {}): SessionStore {
   const dataDir = process.env.WITCODE_DATA_DIR ?? join(homedir(), '.witcode');
   const dbPath = options.dbPath ?? join(dataDir, 'witcode.db');
@@ -66,7 +89,8 @@ export function createSqliteSessionStore(options: { dbPath?: string } = {}): Ses
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      archived INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,6 +113,12 @@ export function createSqliteSessionStore(options: { dbPath?: string } = {}): Ses
   if (!columns.some((column) => column.name === 'tool_calls')) {
     db.exec('ALTER TABLE messages ADD COLUMN tool_calls TEXT');
   }
+  const sessionColumns = db.prepare('PRAGMA table_info(sessions)').all() as unknown as Array<{
+    name: string;
+  }>;
+  if (!sessionColumns.some((column) => column.name === 'archived')) {
+    db.exec('ALTER TABLE sessions ADD COLUMN archived INTEGER NOT NULL DEFAULT 0');
+  }
 
   const insertSession = db.prepare(
     'INSERT INTO sessions (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)',
@@ -100,8 +130,25 @@ export function createSqliteSessionStore(options: { dbPath?: string } = {}): Ses
     'SELECT role, content, tool_call_id, tool_name, tool_calls, created_at FROM messages WHERE session_id = ? ORDER BY created_at ASC, id ASC',
   );
   const selectSummaries = db.prepare(
-    'SELECT id, title, updated_at FROM sessions ORDER BY updated_at DESC, id DESC',
+    'SELECT id, title, updated_at FROM sessions WHERE archived = 0 ORDER BY updated_at DESC, id DESC',
   );
+  const selectArchivedSummaries = db.prepare(
+    'SELECT id, title, updated_at FROM sessions WHERE archived = 1 ORDER BY updated_at DESC, id DESC',
+  );
+  // 每个会话只取最新一条命中消息，再按会话更新时间倒序；LIKE 的 %/_ 由调用方转义。
+  const selectSearchHits = db.prepare(`
+    SELECT s.id AS sessionId, s.title, s.updated_at AS updatedAt, m.content
+    FROM sessions AS s
+    JOIN (
+      SELECT session_id, content,
+             ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY created_at DESC, id DESC) AS rn
+      FROM messages
+      WHERE content LIKE ? ESCAPE '\\'
+    ) AS m ON m.session_id = s.id AND m.rn = 1
+    ORDER BY s.updated_at DESC, s.id DESC
+    LIMIT ?
+  `);
+  const setArchived = db.prepare('UPDATE sessions SET archived = ? WHERE id = ?');
   const insertMessage = db.prepare(
     'INSERT INTO messages (session_id, role, content, tool_call_id, tool_name, tool_calls, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
@@ -155,6 +202,45 @@ export function createSqliteSessionStore(options: { dbPath?: string } = {}): Ses
         Pick<SessionRow, 'id' | 'title' | 'updated_at'>
       >;
       return rows.map((row) => ({ id: row.id, title: row.title, updatedAt: row.updated_at }));
+    },
+
+    async listArchived(): Promise<SessionSummary[]> {
+      const rows = selectArchivedSummaries.all() as unknown as Array<
+        Pick<SessionRow, 'id' | 'title' | 'updated_at'>
+      >;
+      return rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        updatedAt: row.updated_at,
+        archived: true,
+      }));
+    },
+
+    async search(query, limit): Promise<SessionSearchHit[]> {
+      const text = typeof query === 'string' ? query.trim() : '';
+      if (text === '') return [];
+      const size = typeof limit === 'number' && Number.isFinite(limit)
+        ? Math.min(20, Math.max(1, Math.trunc(limit)))
+        : 10;
+      // 先转义反斜杠，再转义 LIKE 通配符，避免查询里的 %/_ 被当成模式。
+      const escaped = text.replace(/[\\%_]/g, '\\$&');
+      const rows = selectSearchHits.all(`%${escaped}%`, size) as unknown as Array<{
+        sessionId: string;
+        title: string;
+        updatedAt: number;
+        content: string;
+      }>;
+      return rows.map((row) => ({
+        sessionId: row.sessionId,
+        title: row.title,
+        snippet: buildSnippet(row.content, text),
+        updatedAt: row.updatedAt,
+      }));
+    },
+
+    async archive(id, archived): Promise<void> {
+      const result = setArchived.run(archived ? 1 : 0, id);
+      if (result.changes === 0) throw new Error(`Session not found: ${id}`);
     },
 
     async append(id, message): Promise<void> {

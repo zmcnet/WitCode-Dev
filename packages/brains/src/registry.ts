@@ -20,7 +20,7 @@ const DEFAULT_BRAIN_ID = 'standard';
 /** 三个 WitCode 官方模式脑，顺序即 UI 分组展示顺序；第四种「自定义」是 UI 入口，不是 Brain。 */
 export const officialBrainIds = ['coding', 'standard', 'profession'] as const;
 
-const brains: readonly BrainDefinition[] = [
+const brains: BrainDefinition[] = [
   codingBrain,
   standardBrain,
   professionBrain,
@@ -38,9 +38,31 @@ const brains: readonly BrainDefinition[] = [
   openclawBrain,
 ];
 
+/** 运行时注册的 Brain（数据型插件）；卸载时移除。 */
+const customBrains = new Map<string, BrainDefinition>();
+
+/** 注册一个外部 Brain；返回撤销函数。id 冲突直接拒绝。 */
+export function registerBrain(brain: BrainDefinition): () => void {
+  if (!brain.id || !brain.name || !brain.identity) {
+    throw new Error('Brain 需要非空的 id / name / identity');
+  }
+  if (getBrain(brain.id)) {
+    throw new Error(`Brain id 已存在：${brain.id}`);
+  }
+  customBrains.set(brain.id, brain);
+  return () => {
+    customBrains.delete(brain.id);
+  };
+}
+
+/** 卸载运行时 Brain；内置 Brain 不允许卸载。 */
+export function unregisterBrain(id: string): boolean {
+  return customBrains.delete(id);
+}
+
 /** 展示用摘要；每次返回新对象，避免调用方改到注册表内部。 */
 export function listBrains(): BrainSummary[] {
-  return brains.map((brain) => ({
+  return [...brains, ...customBrains.values()].map((brain) => ({
     id: brain.id,
     name: brain.name,
     description: brain.description,
@@ -62,7 +84,7 @@ export function listOfficialBrains(): BrainSummary[] {
 }
 
 export function getBrain(id: string): BrainDefinition | undefined {
-  return brains.find((brain) => brain.id === id);
+  return customBrains.get(id) ?? brains.find((brain) => brain.id === id);
 }
 
 export function defaultBrainId(): string {

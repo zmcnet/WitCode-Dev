@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@witcode/brains": "workspace:*",
     "@witcode/context": "workspace:*",
     "@witcode/kernel": "workspace:*",
@@ -18,6 +19,7 @@
     "@witcode/security": "workspace:*",
     "@witcode/session": "workspace:*",
     "@witcode/tools": "workspace:*",
+    "node-pty": "^1.1.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

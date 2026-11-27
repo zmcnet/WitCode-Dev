@@ -1,0 +1,404 @@
+/* 设置 → 斜杠命令：仅使用 ZCode 设计变量，不引入新依赖。 */
+.commands-panel {
+  width: 100%;
+  max-width: 896px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.commands-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.commands-title {
+  margin: 0;
+  font-size: calc(16px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.commands-desc {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.commands-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.commands-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+  white-space: nowrap;
+}
+
+.commands-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+}
+
+.commands-btn:disabled,
+.commands-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.commands-btn-primary {
+  border-color: var(--brand-strong);
+  background: var(--brand-strong);
+  color: #06131c;
+  font-weight: 600;
+}
+
+.commands-btn-primary:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+
+.commands-btn-danger {
+  border-color: var(--danger-border);
+  background: transparent;
+  color: var(--danger-fg);
+}
+
+.commands-btn-danger:hover:not(:disabled) {
+  border-color: var(--warn);
+}
+
+.commands-icon-btn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(18px * var(--font-scale, 1));
+  line-height: 1;
+}
+
+.commands-icon-btn:hover:not(:disabled) {
+  border-color: var(--brand-border);
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.commands-icon-btn.danger:hover:not(:disabled) {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.commands-btn:focus-visible,
+.commands-icon-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.commands-notice {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 行式列表 ---------- */
+.commands-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.commands-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--panel);
+}
+
+.commands-row:last-child {
+  border-bottom: 0;
+}
+
+.commands-row:hover {
+  background: var(--panel-2);
+}
+
+.commands-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.commands-name {
+  display: inline-block;
+  padding: 2px 7px;
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.commands-row-desc {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.commands-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ---------- 空态 ---------- */
+.commands-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.commands-empty-title {
+  color: var(--text);
+  font-size: calc(14px * var(--font-scale, 1));
+}
+
+.commands-empty-hint {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+/* ---------- 编辑弹窗 ---------- */
+.commands-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.commands-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+
+.commands-modal-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.commands-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.commands-modal-head h3 {
+  margin: 0;
+  font-size: calc(15px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.commands-modal-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.commands-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  overflow: auto;
+}
+
+.commands-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commands-field-label {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.commands-input {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+.commands-input::placeholder,
+.commands-textarea::placeholder {
+  color: var(--faint);
+}
+
+.commands-input:focus,
+.commands-textarea:focus {
+  outline: 0;
+  border-color: var(--brand-border);
+}
+
+.commands-input[aria-invalid='true'] {
+  border-color: var(--warn);
+}
+
+.commands-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: calc(12px * var(--font-scale, 1));
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.commands-form-error {
+  margin: 0;
+  color: var(--warn);
+  font-size: calc(12px * var(--font-scale, 1));
+}
+
+.commands-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ---------- 删除确认 ---------- */
+.commands-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.commands-confirm {
+  width: min(400px, 100%);
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.commands-confirm h4 {
+  margin: 0;
+  font-size: calc(15px * var(--font-scale, 1));
+  font-weight: 600;
+}
+
+.commands-confirm p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.5;
+}
+
+.commands-confirm-error {
+  color: var(--warn) !important;
+}
+
+.commands-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .commands-head {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .commands-row-actions {
+    flex-direction: column;
+  }
+
+  .commands-backdrop,
+  .commands-confirm-backdrop {
+    padding: 0;
+  }
+
+  .commands-modal {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .commands-confirm {
+    width: calc(100% - 32px);
+  }
+}
+
+/* Light 主题：主按钮底色为 --brand-strong(#000)，文字需反白。 */
+.theme-light .commands-btn-primary {
+  color: #ffffff;
+}

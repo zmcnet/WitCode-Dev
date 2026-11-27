@@ -1,0 +1,134 @@
+[
+  {
+    "path": "docs/screenshots/parity-chat-dark-1440.png",
+    "theme": "dark",
+    "viewport": "1440",
+    "page": "chat",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-draft-dark-1440.png",
+    "theme": "dark",
+    "viewport": "1440",
+    "page": "draft",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-settings-dark-1440.png",
+    "theme": "dark",
+    "viewport": "1440",
+    "page": "settings",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-chat-light-1440.png",
+    "theme": "light",
+    "viewport": "1440",
+    "page": "chat",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-draft-light-1440.png",
+    "theme": "light",
+    "viewport": "1440",
+    "page": "draft",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-settings-light-1440.png",
+    "theme": "light",
+    "viewport": "1440",
+    "page": "settings",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-chat-dark-390.png",
+    "theme": "dark",
+    "viewport": "390",
+    "page": "chat",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 390,
+      "innerWidth": 390
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-draft-dark-390.png",
+    "theme": "dark",
+    "viewport": "390",
+    "page": "draft",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 390,
+      "innerWidth": 390
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-settings-dark-390.png",
+    "theme": "dark",
+    "viewport": "390",
+    "page": "settings",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 390,
+      "innerWidth": 390
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-chat-light-390.png",
+    "theme": "light",
+    "viewport": "390",
+    "page": "chat",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 390,
+      "innerWidth": 390
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-draft-light-390.png",
+    "theme": "light",
+    "viewport": "390",
+    "page": "draft",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 390,
+      "innerWidth": 390
+    }
+  },
+  {
+    "path": "docs/screenshots/parity-settings-light-390.png",
+    "theme": "light",
+    "viewport": "390",
+    "page": "settings",
+    "errors": 0,
+    "overflow": {
+      "scrollWidth": 390,
+      "innerWidth": 390
+    }
+  }
+]
